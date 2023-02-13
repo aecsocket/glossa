@@ -13,7 +13,7 @@ interface Glossa {
     fun message(key: String): Message =
         message(key, GlossaArgs.Empty)
 
-    fun message(key: String, args: GlossaArgsModel.() -> Unit): Message =
+    fun message(key: String, args: GlossaArgs.Model.() -> Unit): Message =
         message(key, glossaArgs(args))
 
     fun messageList(key: String, args: GlossaArgs): List<Message>
@@ -21,7 +21,7 @@ interface Glossa {
     fun messageList(key: String): List<Message> =
         messageList(key, GlossaArgs.Empty)
 
-    fun messageList(key: String, args: GlossaArgsModel.() -> Unit): List<Message> =
+    fun messageList(key: String, args: GlossaArgs.Model.() -> Unit): List<Message> =
         messageList(key, glossaArgs(args))
 }
 
@@ -37,18 +37,18 @@ data class GlossaArgs(
         replace + other.replace,
         parse + other.parse,
     )
+
+    interface Model {
+        fun replace(key: String, value: Component)
+        fun parse(key: String, value: Any)
+    }
 }
 
-interface GlossaArgsModel {
-    fun replace(key: String, value: Component)
-    fun parse(key: String, value: Any)
-}
-
-fun glossaArgs(block: GlossaArgsModel.() -> Unit): GlossaArgs {
+fun glossaArgs(block: GlossaArgs.Model.() -> Unit): GlossaArgs {
     val replace = HashMap<String, Component>()
     val parse = HashMap<String, Any>()
 
-    block(object : GlossaArgsModel {
+    block(object : GlossaArgs.Model {
         override fun replace(key: String, value: Component) {
             replace[key] = value
         }
