@@ -44,10 +44,12 @@ interface InvalidMessageProvider {
 }
 
 class GlossaStandard(
+    var defaultLocale: Locale,
     private val messages: Map<String, Map<Locale, MessageData>>,
     private val styles: Map<String, Style>,
     private val invalidMessageProvider: InvalidMessageProvider,
     private val miniMessage: MiniMessage = MiniMessage.miniMessage(),
+    override var locale: Locale = defaultLocale,
 ) : Glossa {
     enum class MessageType {
         SINGLE,
@@ -66,9 +68,12 @@ class GlossaStandard(
         ) : MessageData
     }
 
-    private fun messageData(key: String) = messages[key]?.get(Locale.ROOT) // todo
+    private fun messageData(locale: Locale, key: String): MessageData? {
+        val forLocale = messages[key] ?: return null
+        return forLocale[locale] ?: forLocale[defaultLocale] ?: forLocale[Locale.ROOT]
+    }
 
-    private fun buildTagResolver(args: GlossaArgs) = TagResolver.builder().apply {
+    private fun buildTagResolver(args: MessageArgs) = TagResolver.builder().apply {
         // earlier is lower priority
 
         styles.forEach { (key, style) ->
@@ -80,26 +85,26 @@ class GlossaStandard(
         }
     }.build()
 
-    override fun message(key: String, args: GlossaArgs): Message {
-        val data = messageData(key) ?: return invalidMessageProvider.missing(key)
+    override fun message(locale: Locale, key: String, args: MessageArgs): Message {
+        val data = messageData(locale, key) ?: return invalidMessageProvider.missing(key)
         if (data !is MessageData.Single) return invalidMessageProvider.invalidType(key, MessageType.SINGLE)
 
         val tagResolver = buildTagResolver(args)
-        return data.entry.format(args.parse).lines().map { line ->
-            val text = line.format(args.parse)
+        return data.entry.format(args.format).lines().map { line ->
+            val text = line.format(args.format)
             miniMessage.deserialize(text, tagResolver).applyFallbackStyle(data.baseStyle)
         }
     }
 
-    override fun messageList(key: String, args: GlossaArgs): List<Message> {
-        val data = messageData(key) ?: return listOf(invalidMessageProvider.missing(key))
+    override fun messageList(locale: Locale, key: String, args: MessageArgs): List<Message> {
+        val data = messageData(locale, key) ?: return listOf(invalidMessageProvider.missing(key))
         if (data !is MessageData.Multiple) return listOf(invalidMessageProvider.invalidType(key, MessageType.MULTIPLE))
 
         val tagResolver = buildTagResolver(args)
 
         return data.entries.map { entry ->
-            entry.format(args.parse).lines().map { line ->
-                 val text = line.format(args.parse)
+            entry.format(args.format).lines().map { line ->
+                 val text = line.format(args.format)
                  miniMessage.deserialize(text, tagResolver).applyFallbackStyle(data.baseStyle)
             }
         }
@@ -110,15 +115,51 @@ class GlossaStandard(
         fun styles(block: StylesModel.() -> Unit) =
             block(styles)
 
-        fun translation(locale: Locale, block: SectionModel.() -> Unit = {})
+        fun translation(locale: Locale, block: TranslationNode.Model.() -> Unit = {})
     }
 
     interface StylesModel {
         fun style(key: String, style: Style)
     }
+}
 
-    interface SectionModel {
-        fun section(key: String, block: SectionModel.() -> Unit = {})
+typealias TranslationPath = List<String>
+
+fun TranslationPath.toGlossaKey() = joinToString(".")
+
+sealed interface TranslationNode {
+    val children: Map<String, TranslationNode>
+
+    fun mergeFrom(other: TranslationNode)
+
+    class Section : TranslationNode {
+        override val children = HashMap<String, TranslationNode>()
+
+        override fun mergeFrom(other: TranslationNode) {
+            other.children.forEach { (key, child) ->
+                if (child is Section) {
+                    children[key]?.mergeFrom(child) ?: run { children[key] = child }
+                } else {
+                    children[key] = child
+                }
+            }
+        }
+    }
+
+    data class Single(val entry: MessageFormat) : TranslationNode {
+        override val children get() = emptyMap<String, TranslationNode>()
+
+        override fun mergeFrom(other: TranslationNode) {}
+    }
+
+    data class Multiple(val entries: List<MessageFormat>) : TranslationNode {
+        override val children get() = emptyMap<String, TranslationNode>()
+
+        override fun mergeFrom(other: TranslationNode) {}
+    }
+
+    interface Model {
+        fun section(key: String, block: Model.() -> Unit = {})
 
         fun message(key: String, value: String)
 
@@ -132,23 +173,60 @@ class GlossaStandard(
     }
 }
 
-private sealed interface MessageDefinition {
-    data class Single(
-        val entry: String
-    ) : MessageDefinition
+class GlossaBuildException(
+    val path: TranslationPath,
+    val rawMessage: String? = null,
+    cause: Throwable? = null
+) : RuntimeException("${path.toGlossaKey()}: $rawMessage", cause)
 
-    data class Multiple(
-        val entries: List<String>
-    ) : MessageDefinition
+private val KeyPattern = Regex("([a-z0-9_-])+")
+
+private fun validate(key: String): String {
+    if (!KeyPattern.matches(key))
+        throw GlossaBuildException(listOf(key), "Invalid key '$key', must match ${KeyPattern.pattern}")
+    return key
+}
+
+fun translationNodeSection(block: TranslationNode.Model.() -> Unit): TranslationNode.Section {
+    val section = TranslationNode.Section()
+    block(object : TranslationNode.Model {
+        override fun section(key: String, block: TranslationNode.Model.() -> Unit) {
+            validate(key)
+            section.children[key] = try {
+                translationNodeSection(block)
+            } catch (ex: GlossaBuildException) {
+                throw GlossaBuildException(listOf(key) + ex.path, ex.rawMessage, ex.cause)
+            }
+        }
+
+        private fun formatOf(key: String, text: String) = try {
+            MessageFormat(text)
+        } catch (ex: IllegalArgumentException) {
+            throw GlossaBuildException(listOf(key), "Could not construct message format", ex)
+        }
+
+        override fun message(key: String, value: String) {
+            validate(key)
+            section.children[key] = TranslationNode.Single(formatOf(key, value))
+        }
+
+        override fun messageList(key: String, value: List<String>) {
+            validate(key)
+            section.children[key] = TranslationNode.Multiple(value.map { formatOf(key, it) })
+        }
+    })
+    return section
 }
 
 fun glossaStandard(
+    defaultLocale: Locale,
     invalidMessageProvider: InvalidMessageProvider,
     miniMessage: MiniMessage = MiniMessage.miniMessage(),
+    locale: Locale = defaultLocale,
     block: GlossaStandard.Model.() -> Unit
 ): GlossaStandard {
     val styles = HashMap<String, Style>()
-    val translations = HashMap<Locale, MutableMap<String, MessageDefinition>>()
+    val translations = HashMap<Locale, TranslationNode.Section>()
 
     block(object : GlossaStandard.Model {
         override val styles = object : GlossaStandard.StylesModel {
@@ -157,10 +235,42 @@ fun glossaStandard(
             }
         }
 
-        override fun translation(locale: Locale, block: GlossaStandard.SectionModel.() -> Unit) {
+        override fun translation(locale: Locale, block: TranslationNode.Model.() -> Unit) {
+            val section = translationNodeSection(block)
+            translations[locale]?.mergeFrom(section) ?: run { translations[locale] = section }
         }
     })
 
     val messages = HashMap<String, MutableMap<Locale, GlossaStandard.MessageData>>()
-    return GlossaStandard(messages, styles, invalidMessageProvider, miniMessage)
+    translations.forEach { (locale, root) ->
+        fun walk(section: TranslationNode.Section, path: List<String>, baseStyle: Style) {
+            section.children.forEach children@ { (key, child) ->
+                fun setForLocale(value: GlossaStandard.MessageData) {
+                    val pathKey = (path + key).toGlossaKey()
+                    messages.computeIfAbsent(pathKey) { HashMap() }[locale] = value
+                }
+
+                when (child) {
+                    is TranslationNode.Section -> walk(child, path + key, baseStyle)
+                    is TranslationNode.Single -> {
+                        setForLocale(GlossaStandard.MessageData.Single(child.entry, baseStyle))
+                    }
+                    is TranslationNode.Multiple -> {
+                        setForLocale(GlossaStandard.MessageData.Multiple(child.entries, baseStyle))
+                    }
+                }
+            }
+        }
+
+        walk(root, emptyList(), Style.empty())
+    }
+
+    return GlossaStandard(
+        defaultLocale,
+        messages,
+        styles,
+        invalidMessageProvider,
+        miniMessage,
+        locale
+    )
 }

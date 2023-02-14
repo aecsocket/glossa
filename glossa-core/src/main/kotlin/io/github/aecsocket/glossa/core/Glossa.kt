@@ -2,61 +2,74 @@ package io.github.aecsocket.glossa.core
 
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration
+import java.util.Locale
 
 typealias Message = List<Component>
 
 fun Message.flatten() = Component.join(JoinConfiguration.newlines(), this)
 
 interface Glossa {
-    fun message(key: String, args: GlossaArgs): Message
+    val locale: Locale
 
-    fun message(key: String): Message =
-        message(key, GlossaArgs.Empty)
+    fun message(locale: Locale, key: String, args: MessageArgs): Message
+    fun message(key: String, args: MessageArgs) = message(locale, key, args)
 
-    fun message(key: String, args: GlossaArgs.Model.() -> Unit): Message =
-        message(key, glossaArgs(args))
+    fun message(locale: Locale, key: String): Message =
+        message(locale, key, MessageArgs.Empty)
+    fun message(key: String) = message(locale, key)
 
-    fun messageList(key: String, args: GlossaArgs): List<Message>
+    fun message(locale: Locale, key: String, args: MessageArgs.Model.() -> Unit): Message =
+        message(locale, key, messageArgs(args))
+    fun message(key: String, args: MessageArgs.Model.() -> Unit) = message(locale, key, args)
 
-    fun messageList(key: String): List<Message> =
-        messageList(key, GlossaArgs.Empty)
+    fun messageList(locale: Locale, key: String, args: MessageArgs): List<Message>
+    fun messageList(key: String, args: MessageArgs) = messageList(locale, key, args)
 
-    fun messageList(key: String, args: GlossaArgs.Model.() -> Unit): List<Message> =
-        messageList(key, glossaArgs(args))
+    fun messageList(locale: Locale, key: String): List<Message> =
+        messageList(locale, key, MessageArgs.Empty)
+    fun messageList(key: String) = messageList(locale, key)
+
+    fun messageList(locale: Locale, key: String, args: MessageArgs.Model.() -> Unit): List<Message> =
+        messageList(locale, key, messageArgs(args))
+    fun messageList(key: String, args: MessageArgs.Model.() -> Unit) = messageList(locale, key, args)
 }
 
-data class GlossaArgs(
+private class GlossaWithLocale(backing: Glossa, override val locale: Locale) : Glossa by backing
+
+fun Glossa.withLocale(locale: Locale): Glossa = GlossaWithLocale(this, locale)
+
+data class MessageArgs(
     val replace: Map<String, Component>,
-    val parse: Map<String, Any>,
+    val format: Map<String, Any>,
 ) {
     companion object {
-        val Empty = GlossaArgs(emptyMap(), emptyMap())
+        val Empty = MessageArgs(emptyMap(), emptyMap())
     }
 
-    operator fun plus(other: GlossaArgs) = GlossaArgs(
+    operator fun plus(other: MessageArgs) = MessageArgs(
         replace + other.replace,
-        parse + other.parse,
+        format + other.format,
     )
 
     interface Model {
         fun replace(key: String, value: Component)
-        fun parse(key: String, value: Any)
+        fun format(key: String, value: Any)
     }
 }
 
-fun glossaArgs(block: GlossaArgs.Model.() -> Unit): GlossaArgs {
+fun messageArgs(block: MessageArgs.Model.() -> Unit): MessageArgs {
     val replace = HashMap<String, Component>()
-    val parse = HashMap<String, Any>()
+    val format = HashMap<String, Any>()
 
-    block(object : GlossaArgs.Model {
+    block(object : MessageArgs.Model {
         override fun replace(key: String, value: Component) {
             replace[key] = value
         }
 
-        override fun parse(key: String, value: Any) {
-            parse[key] = value
+        override fun format(key: String, value: Any) {
+            format[key] = value
         }
     })
 
-    return GlossaArgs(replace, parse)
+    return MessageArgs(replace, format)
 }
