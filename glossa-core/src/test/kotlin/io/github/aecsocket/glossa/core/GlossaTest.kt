@@ -3,13 +3,10 @@ package io.github.aecsocket.glossa.core
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.Component.text
 import net.kyori.adventure.text.format.NamedTextColor
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
 import java.util.Locale
 import kotlin.test.Test
 
 class GlossaTest {
-    val gson = GsonComponentSerializer.gson()
-
     fun Message.print() = forEach { println(DefaultAnsiComponentRenderer.render(it)) }
 
     val glossa = glossaStandard(
@@ -111,20 +108,20 @@ class GlossaTest {
 
     interface MyPluginMessages {
         @MessageKey("test")
-        fun test(locale: Locale, @Placeholder("value") value: Int, @Placeholder("comp") comp: Component): Message
+        fun test(@Placeholder("value") value: Int, @Placeholder("comp") comp: Component): Message
         @MessageKey("test_lines")
-        fun testLines(locale: Locale): List<Message>
+        fun testLines(): List<Message>
     }
 
     @Test
     fun otherTest() {
-        val messages: MyPluginMessages = glossa.createMessages()
+        val messages: MessageProxy<MyPluginMessages> = glossa.messageProxy()
 
-        messages.test(Locale.ENGLISH,
+        messages.locale(Locale.ENGLISH).test(
             value = 1500,
             comp = text("Hello", NamedTextColor.RED)
         ).print()
-        messages.testLines(Locale.ENGLISH).forEach { it.print() }
+        messages.locale(Locale.ENGLISH).testLines().forEach { it.print() }
 
 //        val reload = myPluginMessages.command.reload()
 //        val players0 = myPluginMessages.command.players(players = 0)

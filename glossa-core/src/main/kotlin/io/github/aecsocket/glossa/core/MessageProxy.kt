@@ -15,8 +15,14 @@ annotation class Placeholder(
     val value: String
 )
 
+interface MessageProxy<T> {
+    val default: T
+
+    fun locale(locale: Locale): T
+}
+
 private fun interface MethodCallback {
-    fun run(args: Array<Any>): Any
+    fun run(locale: Locale, args: Array<Any>): Any
 }
 
 private fun interface MessageParameter {
@@ -27,7 +33,7 @@ private fun interface MessageProvider {
     fun get(locale: Locale, args: MessageArgs): Any
 }
 
-fun <T : Any> Glossa.createMessages(type: Class<T>): T {
+fun <T : Any> Glossa.messageProxy(type: Class<T>): MessageProxy<T> {
     if (!type.isInterface)
         throw IllegalArgumentException("Type must be interface")
 
@@ -40,14 +46,9 @@ fun <T : Any> Glossa.createMessages(type: Class<T>): T {
             ?: error("Must be annotated with ${MessageKey::class.java}")
 
         val methodParams = method.parameters.toMutableList()
-        if (methodParams.isEmpty() || methodParams[0].type != Locale::class.java)
-            error("Parameters must be (Locale, ...)")
-        methodParams.removeFirst()
-        val paramsStart = 1
-
         val messageParams: List<MessageParameter> = methodParams.mapIndexed { idx, methodParam ->
             val placeholder = methodParam.getAnnotation(Placeholder::class.java)?.value
-                ?: error("Parameter ${idx + paramsStart + 1} must be annotated with ${Placeholder::class.simpleName}")
+                ?: error("Parameter ${idx + 1} must be annotated with ${Placeholder::class.simpleName}")
 
             when (methodParam.type) {
                 Component::class.java -> MessageParameter { model, arg ->
@@ -69,21 +70,30 @@ fun <T : Any> Glossa.createMessages(type: Class<T>): T {
             else -> error("Must return Message (= List<Component>) or List<Message>")
         }
 
-        model[method] = MethodCallback { args ->
-            val locale = args[0] as Locale
+        model[method] = MethodCallback { locale, args ->
             messageProvider.get(locale, messageArgs {
                 messageParams.forEachIndexed { idx, param ->
-                    param.model(this, args[idx + 1])
+                    param.model(this, args[idx])
                 }
             })
         }
     }
 
-    val proxy = Proxy.newProxyInstance(javaClass.classLoader, arrayOf(type)) { _, method, args ->
-        model[method]!!.run(args)
+    val interfaces = arrayOf(type)
+    return object : MessageProxy<T> {
+        val proxies = HashMap<Locale, T>()
+        override val default = locale(locale)
+
+        override fun locale(locale: Locale): T {
+            return proxies.computeIfAbsent(locale) {
+                @Suppress("UNCHECKED_CAST")
+                Proxy.newProxyInstance(javaClass.classLoader, interfaces) { _, method, args ->
+                    model[method]!!.run(locale, args ?: emptyArray())
+                } as T
+            }
+        }
     }
-    @Suppress("UNCHECKED_CAST")
-    return proxy as T
 }
 
-inline fun <reified T : Any> Glossa.createMessages() = createMessages(T::class.java)
+inline fun <reified T : Any> Glossa.messageProxy(): MessageProxy<T> =
+    messageProxy(T::class.java)

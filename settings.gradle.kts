@@ -14,3 +14,4 @@ plugins {
 rootProject.name = "glossa"
 
 include("glossa-core")
+include("glossa-configurate")
