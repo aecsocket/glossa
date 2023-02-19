@@ -7,9 +7,7 @@ import net.kyori.adventure.text.format.Style
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.tag.Tag
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
-import java.lang.reflect.Method
-import java.lang.reflect.Proxy
-import java.util.Locale
+import java.util.*
 import java.util.logging.Logger
 
 interface InvalidMessageProvider {
@@ -196,7 +194,7 @@ class GlossaBuildException(
     cause: Throwable? = null
 ) : RuntimeException("${path.toGlossaKey()}: $rawMessage", cause)
 
-private val keyPattern = Regex("([a-z0-9_-])+")
+private val keyPattern = Regex("([a-z0-9_])+")
 
 fun validateGlossaKey(key: String): String {
     if (!keyPattern.matches(key))

@@ -20,15 +20,21 @@ class ConfigurateTest {
     interface Messages {
         @MessageKey("hello_world")
         fun helloWorld(): Message
+
         @MessageKey("with_parameters")
         fun withParameters(
             @Placeholder("comp") comp: Component,
             @Placeholder("num") num: Int
         ): Message
+
         @MessageKey("multiline")
         fun multiline(): Message
+
         @MessageKey("message_list")
         fun messageList(): List<Message>
+
+        @MessageKey("subsection.some_key")
+        fun subsectionSomeKey(): Message
     }
 
     @Test
@@ -57,6 +63,8 @@ class ConfigurateTest {
                  - |-
                    Line 1
                    Line 2
+                subsection:
+                  some_key: "This is a key"
         """.trimIndent()
         val locale = Locale.forLanguageTag("en-US")
 
@@ -72,5 +80,6 @@ class ConfigurateTest {
             comp = text("Red", NamedTextColor.RED),
             num = 15
         ) }
+        printMessage("subsection.some_key") { messages.subsectionSomeKey() }
     }
 }
