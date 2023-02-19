@@ -10,7 +10,7 @@ import kotlin.test.Test
 class GlossaTest {
     val gson = GsonComponentSerializer.gson()
 
-    fun Message.print() = forEach { println(gson.serialize(it)) }
+    fun Message.print() = forEach { println(DefaultAnsiComponentRenderer.render(it)) }
 
     val glossa = glossaStandard(
         defaultLocale = Locale.ENGLISH,
@@ -35,9 +35,9 @@ class GlossaTest {
                     "Some funny message",
                     "Another witty message",
                     """
-                            A splash message
-                            with multiple lines
-                        """.trimIndent())
+                        A splash message
+                        with multiple lines
+                    """.trimIndent())
             }
 
             section("item") {

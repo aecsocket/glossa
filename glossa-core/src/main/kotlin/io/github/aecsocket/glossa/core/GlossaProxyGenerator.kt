@@ -39,14 +39,15 @@ fun <T : Any> Glossa.createMessages(type: Class<T>): T {
         val messageKey = method.getAnnotation(MessageKey::class.java)?.value
             ?: error("Must be annotated with ${MessageKey::class.java}")
 
-        val methodParams = method.parameters
+        val methodParams = method.parameters.toMutableList()
         if (methodParams.isEmpty() || methodParams[0].type != Locale::class.java)
             error("Parameters must be (Locale, ...)")
+        methodParams.removeFirst()
+        val paramsStart = 1
 
-        val messageParams: List<MessageParameter> = (1 until methodParams.size).map { i ->
-            val methodParam = methodParams[i]
+        val messageParams: List<MessageParameter> = methodParams.mapIndexed { idx, methodParam ->
             val placeholder = methodParam.getAnnotation(Placeholder::class.java)?.value
-                ?: error("Parameter ${i+1} must be annotated with ${Placeholder::class.simpleName}")
+                ?: error("Parameter ${idx + paramsStart + 1} must be annotated with ${Placeholder::class.simpleName}")
 
             when (methodParam.type) {
                 Component::class.java -> MessageParameter { model, arg ->

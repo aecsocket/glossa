@@ -6,7 +6,7 @@ import java.util.Locale
 
 typealias Message = List<Component>
 
-fun Message.flatten() = Component.join(JoinConfiguration.newlines(), this)
+fun Message.line() = Component.join(JoinConfiguration.newlines(), this)
 
 interface Glossa {
     val locale: Locale
