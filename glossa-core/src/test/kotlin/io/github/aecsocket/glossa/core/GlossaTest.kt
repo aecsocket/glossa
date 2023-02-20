@@ -4,11 +4,30 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.Component.text
 import net.kyori.adventure.text.format.NamedTextColor
 import java.util.Locale
+import java.util.logging.Logger
 import kotlin.test.Test
 
-class GlossaTest {
-    fun Message.print() = forEach { println(DefaultAnsiComponentRenderer.render(it)) }
+private val testAnsiComponentRenderer = AnsiComponentRenderer(ColorLevel.Indexed16)
 
+fun printMessage(key: String, block: (key: String) -> Message) {
+    val message = block(key)
+    println("$key:")
+    message.forEach { println("  ${testAnsiComponentRenderer.render(it)}") }
+}
+
+fun printMessageList(key: String, block: (key: String) -> List<Message>) {
+    val messageList = block(key)
+    println("$key:")
+    messageList.forEachIndexed { idx, message ->
+        val prefix = "  ${idx+1}) "
+        val indent = " ".repeat(prefix.length)
+        message.forEachIndexed { lineIdx, line ->
+            println((if (lineIdx == 0) prefix else indent) + testAnsiComponentRenderer.render(line))
+        }
+    }
+}
+
+class GlossaTest {
     val glossa = glossaStandard(
         defaultLocale = Locale.ENGLISH,
         invalidMessageProvider = InvalidMessageProvider.Default,
@@ -51,94 +70,121 @@ class GlossaTest {
 
     @Test
     fun testGlossa() {
-        val reload: Message = glossa.message("command.reload") {
-            replace("plugin-name", text("MyPlugin"))
-        }
-        reload.print()
-        // [ Reloaded plugin MyPlugin ]
-
-        val players0 = glossa.message("command.players") {
-            format("players", 0)
-        }
-        players0.print()
-        // [ There are no players online ]
-
-        val players1 = glossa.message("command.players") {
-            format("players", 1)
-        }
-        players1.print()
-        // [ There is 1 player online ]
-
-        val players10 = glossa.message("command.players") {
-            format("players", 10)
-        }
-        players10.print()
-        // [ There are 10 players online ]
-
-        // Interpret `command.details` as a multiline message (type Message)
-        // typealias Message = List<Component>
-        val details = glossa.message("command.details") {
-            replace("foo", text("foo"))
-            replace("bar", text("bar"))
-        }
-        details.print()
-        /* [
-          Details:
-           - Foo: foo
-           - Bar: bar
-         ] */
-
-        // Interpret `command.splash_messages` as a list of messages (type List<Message>)
-        val splashMessages = glossa.messageList("command.splash_messages")
-        /* [
-          [ Some funny message ]
-          [ Another witty message ]
-          [ A splash message, with multiple lines ]
-         ] */
-
-        val itemM9 = glossa.message("item.m9") {
-            format("value", 100)
-        }
-        itemM9.print()
-        val itemM4A1 = glossa.message("item.m4a1") {
-            format("value", 500)
-        }
-        itemM4A1.print()
+//        val reload: Message = glossa.message("command.reload") {
+//            replace("plugin-name", text("MyPlugin"))
+//        }
+//        reload.print()
+//        // [ Reloaded plugin MyPlugin ]
+//
+//        val players0 = glossa.message("command.players") {
+//            format("players", 0)
+//        }
+//        players0.print()
+//        // [ There are no players online ]
+//
+//        val players1 = glossa.message("command.players") {
+//            format("players", 1)
+//        }
+//        players1.print()
+//        // [ There is 1 player online ]
+//
+//        val players10 = glossa.message("command.players") {
+//            format("players", 10)
+//        }
+//        players10.print()
+//        // [ There are 10 players online ]
+//
+//        // Interpret `command.details` as a multiline message (type Message)
+//        // typealias Message = List<Component>
+//        val details = glossa.message("command.details") {
+//            replace("foo", text("foo"))
+//            replace("bar", text("bar"))
+//        }
+//        details.print()
+//        /* [
+//          Details:
+//           - Foo: foo
+//           - Bar: bar
+//         ] */
+//
+//        // Interpret `command.splash_messages` as a list of messages (type List<Message>)
+//        val splashMessages = glossa.messageList("command.splash_messages")
+//        /* [
+//          [ Some funny message ]
+//          [ Another witty message ]
+//          [ A splash message, with multiple lines ]
+//         ] */
+//
+//        val itemM9 = glossa.message("item.m9") {
+//            format("value", 100)
+//        }
+//        itemM9.print()
+//        val itemM4A1 = glossa.message("item.m4a1") {
+//            format("value", 500)
+//        }
+//        itemM4A1.print()
     }
 
     interface MyPluginMessages {
-        @MessageKey("test")
-        fun test(@Placeholder("value") value: Int, @Placeholder("comp") comp: Component): Message
-        @MessageKey("test_lines")
-        fun testLines(): List<Message>
+        @MessageKey
+        fun helloWorld(): Message
+
+        @MessageKey
+        fun withParameters(
+            component: Component,
+            number: Int
+        ): Message
+
+        @MessageKey
+        fun testMessageList(): List<Message>
+
+        @SectionKey
+        val subsection: Subsection
+        interface Subsection {
+            @MessageKey
+            fun aSubKey(): Message
+        }
     }
 
     @Test
-    fun otherTest() {
-        val messages: MessageProxy<MyPluginMessages> = glossa.messageProxy()
+    fun testMessages() {
+        val logger = Logger.getAnonymousLogger()
+        val english = Locale.ENGLISH
+        val glossa = glossaStandard(english, InvalidMessageProvider.DefaultLogging(logger)) {
+            translation(english) {
+                message("hello_world", "Hello world!")
+                message("with_parameters", "Component: <component> | Number: {number}")
+                messageList("test_message_list",
+                    "Message one",
+                    "Message two",
+                    """
+                        Multiline message
+                        with a second line
+                    """.trimIndent())
+                section("subsection") {
+                    message("a_sub_key", "Some sub key")
+                }
+            }
+        }
+        val messages = glossa.messageProxy<MyPluginMessages>().default
 
-        messages.locale(Locale.ENGLISH).test(
-            value = 1500,
-            comp = text("Hello", NamedTextColor.RED)
-        ).print()
-        messages.locale(Locale.ENGLISH).testLines().forEach { it.print() }
+        printMessage("hello_world") {
+            messages.helloWorld()
+        }
 
-//        val reload = myPluginMessages.command.reload()
-//        val players0 = myPluginMessages.command.players(players = 0)
-//        val players1 = myPluginMessages.command.players(players = 1)
-//        val players10 = myPluginMessages.command.players(players = 10)
-//
-//        // `command.details` will have been defined as returning `Message`
-//        val details = myPluginMessages.command.details(foo = text("foo"), bar = text("bar"))
-//
-//        // `command.splash_messages` will have been defined as returning `List<Message>`
-//        val splashMessages = myPluginMessages.command.splashMessages()
-//
-//        // Entries under `item.*`:
-//        // - max depth of 1 (no subkeys are allowed under `m9` or `m4a1`)
-//        // - all accept the same parameters
-//        // maybe this can be relaxed? idk
-//        val itemM9 = myPluginMessages.item("m9", value = 100)
-//        val itemM4A1 = myPluginMessages.item("m4a1", value = 500)
+        printMessage("with_parameters") {
+            messages.withParameters(
+                component = text("Hello", NamedTextColor.RED),
+                number = 15
+            )
+        }
+
+        printMessageList("test_message_list") {
+            messages.testMessageList()
+        }
+
+        printMessage("subsection.a_sub_key") {
+            messages.subsection.aSubKey()
+        }
     }
 }

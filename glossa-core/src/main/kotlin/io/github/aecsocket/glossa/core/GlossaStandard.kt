@@ -270,7 +270,7 @@ fun glossaStandard(
     val messages = HashMap<String, MutableMap<Locale, GlossaStandard.MessageData>>()
     translations.forEach { (locale, root) ->
         fun walk(section: TranslationNode.Section, path: List<String>, baseStyle: Style) {
-            section.children.forEach children@ { (key, child) ->
+            section.children.forEach children@{ (key, child) ->
                 fun setForLocale(value: GlossaStandard.MessageData) {
                     val pathKey = (path + key).toGlossaKey()
                     messages.computeIfAbsent(pathKey) { HashMap() }[locale] = value

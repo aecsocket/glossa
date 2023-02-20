@@ -8,6 +8,10 @@ kotlin {
     jvmToolchain(indra.javaVersions().target().get())
 }
 
+ktlint {
+    disabledRules.set(setOf("no-wildcard-imports", "indent"))
+}
+
 dependencies {
     testImplementation(kotlin("test"))
 }

@@ -39,7 +39,6 @@ class ConfigurateTest {
 
     @Test
     fun testBasic() {
-
     }
 
     @Test
@@ -69,17 +68,21 @@ class ConfigurateTest {
         val locale = Locale.forLanguageTag("en-US")
 
         val glossa = glossaStandard(locale, InvalidMessageProvider.Default) {
-            fromConfigLoader(YamlConfigurationLoader.builder()
-                .source { BufferedReader(StringReader(config)) }
-                .build())
+            fromConfigLoader(
+                YamlConfigurationLoader.builder()
+                    .source { BufferedReader(StringReader(config)) }
+                    .build()
+            )
         }
         val messages = glossa.messageProxy<Messages>().locale(locale)
 
         printMessage("hello_world") { messages.helloWorld() }
-        printMessage("with_parameters") { messages.withParameters(
-            comp = text("Red", NamedTextColor.RED),
-            num = 15
-        ) }
+        printMessage("with_parameters") {
+            messages.withParameters(
+                comp = text("Red", NamedTextColor.RED),
+                num = 15
+            )
+        }
         printMessage("subsection.some_key") { messages.subsectionSomeKey() }
     }
 }

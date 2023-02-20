@@ -19,10 +19,12 @@ object LocaleSerializer : TypeSerializer<Locale> {
     override fun serialize(type: Type, obj: Locale?, node: ConfigurationNode) {
         if (obj == null) node.set(null)
         else {
-            node.set(when (obj) {
-                Locale.ROOT -> ROOT
-                else -> obj.toLanguageTag()
-            })
+            node.set(
+                when (obj) {
+                    Locale.ROOT -> ROOT
+                    else -> obj.toLanguageTag()
+                }
+            )
         }
     }
 

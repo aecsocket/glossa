@@ -14,6 +14,7 @@ dependencies:
   indraCommon: { group: net.kyori, name: indra-common, version: { ref: indra } }
   indraPublishingSonatype: { group: net.kyori, name: indra-publishing-sonatype, version: { ref: indra } }
   kotlin: { group: org.jetbrains.kotlin, name: kotlin-gradle-plugin, version: { ref: kotlin } }
+  kotlinReflect: { group: org.jetbrains.kotlin, name: kotlin-reflect, version: { ref: kotlin } }
   ktlint: { group: org.jlleitschuh.gradle, name: ktlint-gradle, version: { ref: ktlint } }
   adventureApi: { group: net.kyori, name: adventure-api, version: { ref: adventure } }
   adventureTextMiniMessage: { group: net.kyori, name: adventure-text-minimessage, version: { ref: adventure } }
