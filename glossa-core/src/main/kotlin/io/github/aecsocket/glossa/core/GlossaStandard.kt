@@ -60,13 +60,11 @@ class GlossaStandard internal constructor(
 
     sealed interface MessageData {
         data class Single(
-            val entry: MessageFormat,
-            val baseStyle: Style,
+            val entry: MessageFormat
         ) : MessageData
 
         data class Multiple(
-            val entries: List<MessageFormat>,
-            val baseStyle: Style,
+            val entries: List<MessageFormat>
         ) : MessageData
     }
 
@@ -97,7 +95,7 @@ class GlossaStandard internal constructor(
         val tagResolver = buildTagResolver(args)
         return data.entry.format(args.format).lines().map { line ->
             val text = line.format(args.format)
-            miniMessage.deserialize(text, tagResolver).applyFallbackStyle(data.baseStyle)
+            miniMessage.deserialize(text, tagResolver)
         }
     }
 
@@ -110,7 +108,7 @@ class GlossaStandard internal constructor(
         return data.entries.map { entry ->
             entry.format(args.format).lines().map { line ->
                  val text = line.format(args.format)
-                 miniMessage.deserialize(text, tagResolver).applyFallbackStyle(data.baseStyle)
+                 miniMessage.deserialize(text, tagResolver)
             }
         }
     }
@@ -269,7 +267,7 @@ fun glossaStandard(
 
     val messages = HashMap<String, MutableMap<Locale, GlossaStandard.MessageData>>()
     translations.forEach { (locale, root) ->
-        fun walk(section: TranslationNode.Section, path: List<String>, baseStyle: Style) {
+        fun walk(section: TranslationNode.Section, path: List<String>) {
             section.children.forEach children@{ (key, child) ->
                 fun setForLocale(value: GlossaStandard.MessageData) {
                     val pathKey = (path + key).toGlossaKey()
@@ -277,18 +275,18 @@ fun glossaStandard(
                 }
 
                 when (child) {
-                    is TranslationNode.Section -> walk(child, path + key, baseStyle)
+                    is TranslationNode.Section -> walk(child, path + key)
                     is TranslationNode.Single -> {
-                        setForLocale(GlossaStandard.MessageData.Single(child.entry, baseStyle))
+                        setForLocale(GlossaStandard.MessageData.Single(child.entry))
                     }
                     is TranslationNode.Multiple -> {
-                        setForLocale(GlossaStandard.MessageData.Multiple(child.entries, baseStyle))
+                        setForLocale(GlossaStandard.MessageData.Multiple(child.entries))
                     }
                 }
             }
         }
 
-        walk(root, emptyList(), Style.empty())
+        walk(root, emptyList())
     }
 
     return GlossaStandard(

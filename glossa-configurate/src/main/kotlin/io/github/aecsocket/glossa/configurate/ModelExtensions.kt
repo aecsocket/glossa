@@ -59,11 +59,7 @@ fun GlossaStandard.Model.translationsFromConfig(node: ConfigurationNode) {
                         model.messageList(
                             key,
                             child.getList(String::class.java)
-                                ?: throw SerializationException(
-                                    child,
-                                    String::class.java,
-                                    "Message list must be expressed as list of strings"
-                                )
+                                ?: throw SerializationException(child, String::class.java, "Message list must be expressed as list of strings")
                         )
                     }
 
@@ -71,11 +67,7 @@ fun GlossaStandard.Model.translationsFromConfig(node: ConfigurationNode) {
                         model.message(
                             key,
                             child.string
-                                ?: throw SerializationException(
-                                    child,
-                                    String::class.java,
-                                    "Message must be expressed as string"
-                                )
+                                ?: throw SerializationException(child, String::class.java, "Message must be expressed as string")
                         )
                     }
                 }

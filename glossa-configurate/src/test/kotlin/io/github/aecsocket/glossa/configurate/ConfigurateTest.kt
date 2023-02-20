@@ -74,7 +74,7 @@ class ConfigurateTest {
                     .build()
             )
         }
-        val messages = glossa.messageProxy<Messages>().locale(locale)
+        val messages = glossa.messageProxy<Messages>().forLocale(locale)
 
         printMessage("hello_world") { messages.helloWorld() }
         printMessage("with_parameters") {
