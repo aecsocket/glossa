@@ -68,6 +68,13 @@ class GlossaStandard internal constructor(
         ) : MessageData
     }
 
+    fun countMessages() = messages.size
+    fun countLocales() = messages
+        .flatMap { (_, forLocale) -> forLocale.keys }
+        .toSet().size
+    fun countSubstitutions() = substitutions.size
+    fun countStyles() = styles.size
+
     private fun messageData(locale: Locale, key: String): MessageData? {
         val forLocale = messages[key] ?: return null
         return forLocale[locale] ?: forLocale[defaultLocale] ?: forLocale[Locale.ROOT]
@@ -94,8 +101,7 @@ class GlossaStandard internal constructor(
 
         val tagResolver = buildTagResolver(args)
         return data.entry.format(args.format).lines().map { line ->
-            val text = line.format(args.format)
-            miniMessage.deserialize(text, tagResolver)
+            miniMessage.deserialize(line, tagResolver)
         }
     }
 

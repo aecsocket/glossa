@@ -70,9 +70,9 @@ private fun Glossa.messageProxyModel(type: KClass<*>, baseMessageKey: String): M
         when (member) {
             is KFunction -> {
                 // message key
-                val messageKey = baseMessageKey + (member.findAnnotation<MessageKey>()?.value
-                    ?.ifEmpty { namingScheme.coerceName(member.name) }
-                    ?: error("Must be annotated with ${MessageKey::class.simpleName}"))
+                val thisMessageKey = member.findAnnotation<MessageKey>()?.value?.ifEmpty { null }
+                    ?: namingScheme.coerceName(member.name)
+                val messageKey = baseMessageKey + thisMessageKey
 
                 val messageParams = (1 until member.parameters.size).map { paramIdx ->
                     val param = member.parameters[paramIdx]
@@ -121,9 +121,8 @@ private fun Glossa.messageProxyModel(type: KClass<*>, baseMessageKey: String): M
             }
             is KProperty -> {
                 // subsection
-                val sectionKey = member.findAnnotation<SectionKey>()?.value
-                    ?.ifEmpty { namingScheme.coerceName(member.name) }
-                    ?: error("Must be annotated with ${SectionKey::class.simpleName}")
+                val sectionKey = member.findAnnotation<SectionKey>()?.value?.ifEmpty { null }
+                    ?: namingScheme.coerceName(member.name)
 
                 val sectionType = member.returnType.classifier as? KClass<*>
                     ?: error("Must return class")
