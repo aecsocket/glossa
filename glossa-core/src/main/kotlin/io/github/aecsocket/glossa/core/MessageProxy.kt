@@ -12,24 +12,50 @@ import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.jvm.javaGetter
 import kotlin.reflect.jvm.javaMethod
 
+val defaultNamingScheme = NamingScheme.SnakeCase
+
+/**
+ * Determines a method which maps to a message key under the current section.
+ *
+ * If blank or not specified, the method name is coerced using [defaultNamingScheme].
+ */
 @Target(AnnotationTarget.FUNCTION)
 annotation class MessageKey(
     val value: String = ""
 )
 
+/**
+ * Determines a method parameter which maps to a placeholder under the method's message key.
+ *
+ * If blank or not specified, the parameter name is coerced using [defaultNamingScheme].
+ */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 annotation class Placeholder(
     val value: String = ""
 )
 
+/**
+ * Determines a property getter which maps to a section key under the current section.
+ *
+ * If blank or not specified, the property name is coerced using [defaultNamingScheme].
+ */
 @Target(AnnotationTarget.PROPERTY)
 annotation class SectionKey(
     val value: String = ""
 )
 
+/**
+ * Provides access to a generic message proxy created by [messageProxy].
+ */
 interface MessageProxy<T : Any> {
+    /**
+     * Gets the message proxy for the default locale.
+     */
     val default: T
 
+    /**
+     * Gets the message proxy for a specific locale.
+     */
     fun forLocale(locale: Locale): T
 }
 
@@ -56,8 +82,6 @@ private fun interface MessageProvider {
     fun get(locale: Locale, args: MessageArgs): Any
 }
 
-private val namingScheme = NamingScheme.SnakeCase
-
 private fun Glossa.messageProxyModel(type: KClass<*>, baseMessageKey: String): MessageProxyModel {
     if (!type.isAbstract)
         throw IllegalArgumentException("Type must be abstract")
@@ -71,7 +95,7 @@ private fun Glossa.messageProxyModel(type: KClass<*>, baseMessageKey: String): M
             is KFunction -> {
                 // message key
                 val thisMessageKey = member.findAnnotation<MessageKey>()?.value?.ifEmpty { null }
-                    ?: namingScheme.coerceName(member.name)
+                    ?: defaultNamingScheme.coerceName(member.name)
                 val messageKey = baseMessageKey + thisMessageKey
 
                 val messageParams = (1 until member.parameters.size).map { paramIdx ->
@@ -80,7 +104,7 @@ private fun Glossa.messageProxyModel(type: KClass<*>, baseMessageKey: String): M
                         throw IllegalArgumentException("${member.name} param ${paramIdx+1} (${param.name}): $message")
 
                     val placeholder = param.findAnnotation<Placeholder>()?.value?.ifEmpty { null }
-                        ?: namingScheme.coerceName(param.name
+                        ?: defaultNamingScheme.coerceName(param.name
                             ?: error("Must have parameter name or be annotated with ${Placeholder::class.simpleName}"))
 
                     when (param.type.classifier) {
@@ -122,7 +146,7 @@ private fun Glossa.messageProxyModel(type: KClass<*>, baseMessageKey: String): M
             is KProperty -> {
                 // subsection
                 val sectionKey = member.findAnnotation<SectionKey>()?.value?.ifEmpty { null }
-                    ?: namingScheme.coerceName(member.name)
+                    ?: defaultNamingScheme.coerceName(member.name)
 
                 val sectionType = member.returnType.classifier as? KClass<*>
                     ?: error("Must return class")
@@ -157,6 +181,14 @@ private fun MessageProxyModel.createProxy(locale: Locale): Any {
     }
 }
 
+/**
+ * Generates a [MessageProxy] which uses the underlying [T] type as a type-safe API for message generation.
+ *
+ * The type provided must:
+ * - be an interface
+ * - only hold methods which map to message keys
+ * - only hold properties which map to subsection keys
+ */
 fun <T : Any> Glossa.messageProxy(type: KClass<T>): MessageProxy<T> {
     val proxyModel = messageProxyModel(type, "")
     return object : MessageProxy<T> {

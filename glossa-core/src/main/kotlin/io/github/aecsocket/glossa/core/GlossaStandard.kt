@@ -2,48 +2,17 @@ package io.github.aecsocket.glossa.core
 
 import com.ibm.icu.text.MessageFormat
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.Component.text
 import net.kyori.adventure.text.format.Style
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.tag.Tag
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import java.util.*
-import java.util.logging.Logger
 
-interface InvalidMessageProvider {
-    object Default : InvalidMessageProvider {
-        override fun missing(key: String): Message {
-            return listOf(text(key))
-        }
-
-        override fun invalidType(
-            key: String,
-            expected: GlossaStandard.MessageType
-        ): Message {
-            return listOf(text(key))
-        }
-    }
-
-    class DefaultLogging(private val logger: Logger) : InvalidMessageProvider {
-        override fun missing(key: String): Message {
-            logger.warning("Missing Glossa message for key '$key'")
-            return listOf(text(key))
-        }
-
-        override fun invalidType(
-            key: String,
-            expected: GlossaStandard.MessageType
-        ): Message {
-            logger.warning("Glossa message for key '$key' was expected to be ${expected.name}")
-            return listOf(text(key))
-        }
-    }
-
-    fun missing(key: String): Message
-
-    fun invalidType(key: String, expected: GlossaStandard.MessageType): Message
-}
-
+/**
+ * Default implementation of [Glossa].
+ *
+ * To create an instance, use the [glossaStandard] builder function.
+ */
 class GlossaStandard internal constructor(
     var defaultLocale: Locale,
     private val messages: Map<String, Map<Locale, MessageData>>,
@@ -53,11 +22,6 @@ class GlossaStandard internal constructor(
     private val miniMessage: MiniMessage = MiniMessage.miniMessage(),
     override var locale: Locale = defaultLocale,
 ) : Glossa {
-    enum class MessageType {
-        SINGLE,
-        MULTIPLE
-    }
-
     sealed interface MessageData {
         data class Single(
             val entry: MessageFormat
@@ -68,11 +32,26 @@ class GlossaStandard internal constructor(
         ) : MessageData
     }
 
+    /**
+     * Gets the number of total messages registered.
+     */
     fun countMessages() = messages.size
+
+    /**
+     * Gets the number of unique locales registered.
+     */
     fun countLocales() = messages
         .flatMap { (_, forLocale) -> forLocale.keys }
         .toSet().size
+
+    /**
+     * Gets the number of substitutions registered.
+     */
     fun countSubstitutions() = substitutions.size
+
+    /**
+     * Gets the number of styles registered.
+     */
     fun countStyles() = styles.size
 
     private fun messageData(locale: Locale, key: String): MessageData? {
@@ -121,26 +100,44 @@ class GlossaStandard internal constructor(
 
     interface Model {
         val substitutions: SubstitutionsModel
-        fun substitutions(block: SubstitutionsModel.() -> Unit) =
-            block(substitutions)
 
         val styles: StylesModel
-        fun styles(block: StylesModel.() -> Unit) =
-            block(styles)
 
+        /**
+         * Registers a set of translations for a specific locale.
+         */
         fun translation(locale: Locale, block: TranslationNode.Model.() -> Unit = {})
     }
 
     interface SubstitutionsModel {
+        /**
+         * Registers a substitution, which is passed as a self-closing MiniMessage tag by [key].
+         * @param key The key, which must conform to [validateGlossaKey].
+         */
         fun substitution(key: String, substitution: Component)
 
+        /**
+         * Parses a component using this instance's [miniMessage] and registers it as a substitution,
+         * which is passed as a self-closing MiniMessage tag by [key].
+         * @param key The key, which must conform to [validateGlossaKey].
+         */
         fun miniMessageSubstitution(key: String, substitution: String)
     }
 
     interface StylesModel {
+        /**
+         * Registers a style, which is passed as a MiniMessage open/closing tag by [key].
+         * @param key The key, which must conform to [validateGlossaKey].
+         */
         fun style(key: String, style: Style)
     }
 }
+
+fun GlossaStandard.Model.substitutions(block: GlossaStandard.SubstitutionsModel.() -> Unit) =
+    block(substitutions)
+
+fun GlossaStandard.Model.styles(block: GlossaStandard.StylesModel.() -> Unit) =
+    block(styles)
 
 typealias TranslationPath = List<String>
 
@@ -178,19 +175,39 @@ sealed interface TranslationNode {
     }
 
     interface Model {
+        /**
+         * Registers a subsection by [key].
+         * @param key The key, which must conform to [validateGlossaKey].
+         */
         fun section(key: String, block: Model.() -> Unit = {})
 
+        /**
+         * Registers a [MessageType.SINGLE] message by [key] under the current section.
+         * @param key The key, which must conform to [validateGlossaKey].
+         */
         fun message(key: String, value: String)
 
+        /**
+         * Registers a [MessageType.MULTIPLE] message by [key] under the current section.
+         * @param key The key, which must conform to [validateGlossaKey].
+         */
         fun messageList(key: String, value: List<String>)
-
-        fun messageList(key: String, value: Iterable<String>) =
-            messageList(key, value.toList())
-
-        fun messageList(key: String, vararg value: String) =
-            messageList(key, value.toList())
     }
 }
+
+/**
+ * Registers a [MessageType.MULTIPLE] message by [key] under the current section.
+ * @param key The key, which must conform to [validateGlossaKey].
+ */
+fun TranslationNode.Model.messageList(key: String, value: Iterable<String>) =
+    messageList(key, value.toList())
+
+/**
+ * Registers a [MessageType.MULTIPLE] message by [key] under the current section.
+ * @param key The key, which must conform to [validateGlossaKey].
+ */
+fun TranslationNode.Model.messageList(key: String, vararg value: String) =
+    messageList(key, value.toList())
 
 class GlossaBuildException(
     val path: TranslationPath,
@@ -200,12 +217,18 @@ class GlossaBuildException(
 
 private val keyPattern = Regex("([a-z0-9_])+")
 
+/**
+ * Validates a key for the [Glossa] engine. The key must match the pattern `([a-z0-9_])+`
+ */
 fun validateGlossaKey(key: String): String {
     if (!keyPattern.matches(key))
         throw GlossaBuildException(listOf(key), "Invalid key '$key', must match ${keyPattern.pattern}")
     return key
 }
 
+/**
+ * Builds a [TranslationNode.Section] by a model.
+ */
 fun translationNodeSection(block: TranslationNode.Model.() -> Unit): TranslationNode.Section {
     val section = TranslationNode.Section()
     block(object : TranslationNode.Model {
@@ -237,6 +260,9 @@ fun translationNodeSection(block: TranslationNode.Model.() -> Unit): Translation
     return section
 }
 
+/**
+ * Builds a [GlossaStandard] by a model.
+ */
 fun glossaStandard(
     defaultLocale: Locale,
     invalidMessageProvider: InvalidMessageProvider,

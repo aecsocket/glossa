@@ -14,7 +14,7 @@ class ConfigurateTest {
     fun printMessage(key: String, block: (key: String) -> Message) {
         val message = block(key)
         println("$key:")
-        message.forEach { println("  ${DefaultAnsiComponentRenderer.render(it)}") }
+        message.forEach { println("  ${defaultAnsiComponentRenderer.render(it)}") }
     }
 
     interface Messages {

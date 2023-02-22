@@ -12,14 +12,23 @@ import kotlin.collections.HashMap
 
 // Adapted from https://github.com/KyoriPowered/ansi/blob/trunk/src/main/java/net/kyori/ansi/ColorLevel.java
 
+/**
+ * Allows formatting RGB colors to a format that a specific terminal emulator supports.
+ */
 fun interface ColorLevel {
     fun escape(rgb: Int): String
 
     companion object {
+        /**
+         * For terminals which support all 256^3 RGB color combinations using truecolor.
+         */
         val TrueColor = ColorLevel { rgb ->
             "38;2;${rgb shr 16 and 0xff};${rgb shr 8 and 0xff};${rgb and 0xff}"
         }
 
+        /**
+         * For terminals which only support the basic 16 colors.
+         */
         val Indexed16 = ColorLevel { rgb ->
             when (rgb) {
                 0x000000 -> "30"
@@ -42,7 +51,10 @@ fun interface ColorLevel {
             }
         }
 
-        fun colorLevel(): ColorLevel {
+        /**
+         * Gets the color level of the current terminal emulator.
+         */
+        fun get(): ColorLevel {
             System.getenv("COLORTERM")?.let {
                 if (it == "truecolor" || it == "24bit")
                     return TrueColor
@@ -52,9 +64,16 @@ fun interface ColorLevel {
     }
 }
 
+/**
+ * Allows rendering [Component] instances to text, utilising ANSI formatting escape codes to style the text.
+ * @param colorLevel What color level to use to output text to. Use [ColorLevel.get] to get the current environment color level.
+ */
 class AnsiComponentRenderer(
     private val colorLevel: ColorLevel
 ) {
+    /**
+     * Outputs a text version of the input component, using ANSI formatting escape codes to style the text.
+     */
     fun render(input: Component): String {
         val result = StringBuilder()
         val styleStack = Stack<Style>()
@@ -139,4 +158,7 @@ class AnsiComponentRenderer(
     }
 }
 
-val DefaultAnsiComponentRenderer = AnsiComponentRenderer(ColorLevel.colorLevel())
+/**
+ * The default [AnsiComponentRenderer] for the current environment color level.
+ */
+val defaultAnsiComponentRenderer = AnsiComponentRenderer(ColorLevel.get())
