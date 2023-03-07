@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "io.github.aecsocket"
-version = "1.0.0-SNAPSHOT"
+version = "1.0.0"
 description = "Localization library for Adventure components"
 
 tasks.register("printVersionType") {
