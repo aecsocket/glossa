@@ -4,6 +4,7 @@ import net.kyori.adventure.text.Component
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty
@@ -86,7 +87,7 @@ private fun Glossa.messageProxyModel(type: KClass<*>, baseMessageKey: String): M
     if (!type.isAbstract)
         throw IllegalArgumentException("Type must be abstract")
 
-    val model = HashMap<Method, MethodCallback>()
+    val model = ConcurrentHashMap<Method, MethodCallback>()
     type.declaredMembers.forEach { member ->
         fun error(message: String): Nothing =
             throw IllegalArgumentException("${member.name}: $message")
@@ -170,7 +171,7 @@ private fun Glossa.messageProxyModel(type: KClass<*>, baseMessageKey: String): M
 }
 
 private fun MessageProxyModel.createProxy(locale: Locale): Any {
-    val sectionProxies = HashMap<Method, Any>()
+    val sectionProxies = ConcurrentHashMap<Method, Any>()
     return Proxy.newProxyInstance(javaClass.classLoader, arrayOf(type)) { _, method, args ->
         when (val callback = getCallback(method)) {
             is MethodCallback.CreateMessage -> callback.create(locale, args ?: emptyArray())
@@ -192,7 +193,7 @@ private fun MessageProxyModel.createProxy(locale: Locale): Any {
 fun <T : Any> Glossa.messageProxy(type: KClass<T>): MessageProxy<T> {
     val proxyModel = messageProxyModel(type, "")
     return object : MessageProxy<T> {
-        val proxies = HashMap<Locale, T>()
+        val proxies = ConcurrentHashMap<Locale, T>()
         override val default = forLocale(locale)
 
         override fun forLocale(locale: Locale): T {
