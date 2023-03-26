@@ -1,7 +1,6 @@
 package io.github.aecsocket.glossa.configurate
 
 import io.github.aecsocket.glossa.*
-import io.github.aecsocket.glossa.core.*
 import net.kyori.adventure.serializer.configurate4.ConfigurateComponentSerializer
 import net.kyori.adventure.text.format.Style
 import org.spongepowered.configurate.ConfigurationNode
