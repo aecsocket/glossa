@@ -1,4 +1,4 @@
-package io.github.aecsocket.glossa.core
+package io.github.aecsocket.glossa
 
 import net.kyori.adventure.text.Component
 import java.lang.reflect.Method

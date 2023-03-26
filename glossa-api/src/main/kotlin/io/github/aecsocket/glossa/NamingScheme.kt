@@ -1,4 +1,4 @@
-package io.github.aecsocket.glossa.core
+package io.github.aecsocket.glossa
 
 /**
  * Allows coercing one identifier to another identifier with a different name format.

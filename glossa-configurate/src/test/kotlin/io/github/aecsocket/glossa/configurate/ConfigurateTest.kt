@@ -1,6 +1,6 @@
 package io.github.aecsocket.glossa.configurate
 
-import io.github.aecsocket.glossa.core.*
+import io.github.aecsocket.glossa.*
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.Component.text
 import net.kyori.adventure.text.format.NamedTextColor

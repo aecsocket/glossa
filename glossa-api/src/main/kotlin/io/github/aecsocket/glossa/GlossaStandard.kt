@@ -1,4 +1,4 @@
-package io.github.aecsocket.glossa.core
+package io.github.aecsocket.glossa
 
 import com.ibm.icu.text.MessageFormat
 import net.kyori.adventure.text.Component
