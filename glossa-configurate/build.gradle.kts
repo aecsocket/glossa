@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    implementation(projects.glossaCore)
+    implementation(projects.glossaApi)
     implementation(libs.adventureApi)
     implementation(libs.adventureSerializerConfigurate)
     implementation(libs.configurateCore)
@@ -12,5 +12,4 @@ dependencies {
 
     testImplementation(libs.configurateYaml)
     testImplementation(libs.adventureTextMiniMessage)
-    testImplementation(libs.icu4j)
 }

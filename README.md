@@ -23,7 +23,7 @@ repositories {
 }
 
 dependencies {
-    implementation("io.github.aecsocket", "glossa-core", "VERSION")
+    implementation("io.github.aecsocket", "glossa-api", "VERSION")
     implementation("io.github.aecsocket", "glossa-configurate", "VERSION")
 }
 ```
