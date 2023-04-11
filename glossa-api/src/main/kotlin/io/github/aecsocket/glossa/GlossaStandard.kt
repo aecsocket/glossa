@@ -24,11 +24,11 @@ class GlossaStandard internal constructor(
 ) : Glossa {
     sealed interface MessageData {
         data class Single(
-            val entry: MessageFormat
+            val pattern: String,
         ) : MessageData
 
         data class Multiple(
-            val entries: List<MessageFormat>
+            val patterns: List<String>,
         ) : MessageData
     }
 
@@ -79,7 +79,7 @@ class GlossaStandard internal constructor(
         if (data !is MessageData.Single) return invalidMessageProvider.invalidType(key, MessageType.SINGLE)
 
         val tagResolver = buildTagResolver(args)
-        return data.entry.format(args.format).lines().map { line ->
+        return MessageFormat(data.pattern, locale).format(args.format).lines().map { line ->
             miniMessage.deserialize(line, tagResolver)
         }
     }
@@ -90,8 +90,8 @@ class GlossaStandard internal constructor(
 
         val tagResolver = buildTagResolver(args)
 
-        return data.entries.map { entry ->
-            entry.format(args.format).lines().map { line ->
+        return data.patterns.map { pattern ->
+            MessageFormat(pattern, locale).format(args.format).lines().map { line ->
                  val text = line.format(args.format)
                  miniMessage.deserialize(text, tagResolver)
             }
@@ -162,13 +162,13 @@ sealed interface TranslationNode {
         }
     }
 
-    data class Single(val entry: MessageFormat) : TranslationNode {
+    data class Single(val pattern: String) : TranslationNode {
         override val children get() = emptyMap<String, TranslationNode>()
 
         override fun mergeFrom(other: TranslationNode) {}
     }
 
-    data class Multiple(val entries: List<MessageFormat>) : TranslationNode {
+    data class Multiple(val patterns: List<String>) : TranslationNode {
         override val children get() = emptyMap<String, TranslationNode>()
 
         override fun mergeFrom(other: TranslationNode) {}
@@ -241,20 +241,23 @@ fun translationNodeSection(block: TranslationNode.Model.() -> Unit): Translation
             }
         }
 
-        private fun formatOf(key: String, text: String) = try {
-            MessageFormat(text)
-        } catch (ex: IllegalArgumentException) {
-            throw GlossaBuildException(listOf(key), "Could not construct message format", ex)
+        private fun validateFormat(key: String, text: String): String {
+            try {
+                MessageFormat(text)
+                return text
+            } catch (ex: IllegalArgumentException) {
+                throw GlossaBuildException(listOf(key), "Could not construct message format", ex)
+            }
         }
 
         override fun message(key: String, value: String) {
             validateGlossaKey(key)
-            section.children[key] = TranslationNode.Single(formatOf(key, value))
+            section.children[key] = TranslationNode.Single(validateFormat(key, value))
         }
 
         override fun messageList(key: String, value: List<String>) {
             validateGlossaKey(key)
-            section.children[key] = TranslationNode.Multiple(value.map { formatOf(key, it) })
+            section.children[key] = TranslationNode.Multiple(value.map { validateFormat(key, it) })
         }
     })
     return section
@@ -300,7 +303,7 @@ fun glossaStandard(
     val messages = HashMap<String, MutableMap<Locale, GlossaStandard.MessageData>>()
     translations.forEach { (locale, root) ->
         fun walk(section: TranslationNode.Section, path: List<String>) {
-            section.children.forEach children@{ (key, child) ->
+            section.children.forEach children@ { (key, child) ->
                 fun setForLocale(value: GlossaStandard.MessageData) {
                     val pathKey = (path + key).toGlossaKey()
                     messages.computeIfAbsent(pathKey) { HashMap() }[locale] = value
@@ -309,10 +312,10 @@ fun glossaStandard(
                 when (child) {
                     is TranslationNode.Section -> walk(child, path + key)
                     is TranslationNode.Single -> {
-                        setForLocale(GlossaStandard.MessageData.Single(child.entry))
+                        setForLocale(GlossaStandard.MessageData.Single(child.pattern))
                     }
                     is TranslationNode.Multiple -> {
-                        setForLocale(GlossaStandard.MessageData.Multiple(child.entries))
+                        setForLocale(GlossaStandard.MessageData.Multiple(child.patterns))
                     }
                 }
             }

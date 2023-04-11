@@ -11,7 +11,7 @@ signing {
 }
 
 indra {
-    github("aecsocket", "glossa")
+    github("aecsocket", rootProject.name)
     mitLicense()
 
     configurePublications {
