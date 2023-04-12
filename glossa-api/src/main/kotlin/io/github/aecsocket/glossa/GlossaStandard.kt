@@ -6,6 +6,7 @@ import net.kyori.adventure.text.format.Style
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.tag.Tag
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
+import java.text.FieldPosition
 import java.util.*
 
 /**
@@ -74,12 +75,18 @@ class GlossaStandard internal constructor(
         }
     }.build()
 
+    private fun MessageFormat.formatWith(args: Map<String, Any>): String {
+        val result = StringBuffer()
+        format(args, result, FieldPosition(0))
+        return result.toString()
+    }
+
     override fun message(locale: Locale, key: String, args: MessageArgs): Message {
         val data = messageData(locale, key) ?: return invalidMessageProvider.missing(key)
         if (data !is MessageData.Single) return invalidMessageProvider.invalidType(key, MessageType.SINGLE)
 
         val tagResolver = buildTagResolver(args)
-        return MessageFormat(data.pattern, locale).format(args.format).lines().map { line ->
+        return MessageFormat(data.pattern, locale).formatWith(args.format).lines().map { line ->
             miniMessage.deserialize(line, tagResolver)
         }
     }
@@ -91,7 +98,7 @@ class GlossaStandard internal constructor(
         val tagResolver = buildTagResolver(args)
 
         return data.patterns.map { pattern ->
-            MessageFormat(pattern, locale).format(args.format).lines().map { line ->
+            MessageFormat(pattern, locale).formatWith(args.format).lines().map { line ->
                  val text = line.format(args.format)
                  miniMessage.deserialize(text, tagResolver)
             }
@@ -271,7 +278,7 @@ fun glossaStandard(
     invalidMessageProvider: InvalidMessageProvider,
     miniMessage: MiniMessage = MiniMessage.miniMessage(),
     locale: Locale = defaultLocale,
-    block: GlossaStandard.Model.() -> Unit
+    block: GlossaStandard.Model.() -> Unit = {},
 ): GlossaStandard {
     val substitutions = HashMap<String, Component>()
     val styles = HashMap<String, Style>()

@@ -3,188 +3,427 @@ package io.github.aecsocket.glossa
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.Component.text
 import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.Style
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
+import java.util.Date
 import java.util.Locale
-import java.util.logging.Logger
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
-private val testAnsiComponentRenderer = AnsiComponentRenderer(ColorLevel.Indexed16)
+val gson = GsonComponentSerializer.gson()
 
-fun printMessage(key: String, block: (key: String) -> Message) {
-    val message = block(key)
-    println("$key:")
-    message.forEach { println("  ${testAnsiComponentRenderer.render(it)}") }
+fun assertMessage(expected: Message, actual: Message) {
+    assertEquals(
+        expected.map { gson.serialize(it) },
+        actual.map { gson.serialize(it) }
+    )
 }
 
-fun printMessageList(key: String, block: (key: String) -> List<Message>) {
-    val messageList = block(key)
-    println("$key:")
-    messageList.forEachIndexed { idx, message ->
-        val prefix = "  ${idx+1}) "
-        val indent = " ".repeat(prefix.length)
-        message.forEachIndexed { lineIdx, line ->
-            println((if (lineIdx == 0) prefix else indent) + testAnsiComponentRenderer.render(line))
-        }
-    }
+fun assertMessageList(expected: List<Message>, actual: List<Message>) {
+    assertEquals(
+        expected.map { x -> x.map { gson.serialize(it) } },
+        actual.map { x -> x.map { gson.serialize(it )} },
+    )
 }
 
 class GlossaTest {
+    @Test
+    fun testBuilder() {
+        val glossa = glossaStandard(
+            defaultLocale = Locale.ENGLISH,
+            invalidMessageProvider = InvalidMessageProvider.Default,
+        ) {
+            substitutions {
+                substitution("a", text("A"))
+            }
+
+            styles {
+                style("a", Style.empty())
+            }
+
+            translation(Locale.ENGLISH) {
+                message("a", "A")
+                message("b", "B")
+                message("c", "C")
+            }
+
+            translation(Locale.FRENCH) {
+                message("a", "A")
+            }
+        }
+
+        assertEquals(1, glossa.countSubstitutions())
+        assertEquals(1, glossa.countStyles())
+        assertEquals(2, glossa.countLocales())
+        assertEquals(3, glossa.countMessages())
+    }
+
+    val english: Locale = Locale.ENGLISH
+    val french: Locale = Locale.FRENCH
+
     val glossa = glossaStandard(
-        defaultLocale = Locale.ENGLISH,
+        defaultLocale = english,
         invalidMessageProvider = InvalidMessageProvider.Default,
     ) {
-        translation(Locale.ENGLISH) {
-            section("command") {
-                message("reload", "Reloaded plugin <plugin-name>")
-                message("players", """
-                        There {players, plural,
-                            zero {are no players}
-                            one {is # player}
-                            other {are # players}
-                        } online.
-                    """.trimIndent())
-                message("details", """
-                        Details:
-                        - Foo: <foo>
-                        - Bar: <bar>
-                    """.trimIndent())
-                messageList("splash_messages",
-                    "Some funny message",
-                    "Another witty message",
-                    """
-                        A splash message
-                        with multiple lines
-                    """.trimIndent())
-            }
+        translation(english) {
+            message("hello_world", "Hello World!")
 
-            section("item") {
-                message("m9", "Beretta M9 (cost: {value})")
-                message("m4a1", "Colt M4A1 (cost: {value})")
-            }
+            message("a_message", "Simple message")
 
-            message("test", "Hello world! Val: {value, number}, component: <comp>")
-            messageList("test_lines",
+            message("multiline", """
+                Line one
+                Line two
+            """.trimIndent())
+
+            messageList("a_message_list",
                 "Message one",
-                "Message two")
+                "Message two",
+            )
+
+            messageList("multiline_list",
+                "Message one with 1 line",
+                """
+                    Message two
+                    with 2 lines
+                """.trimIndent(),
+            )
+
+            section("section") {
+                message("child", "Child message")
+            }
+
+            message("with_replacement", "a = <a>")
+
+            message("with_format_number", "num = {num, number}")
+
+            message("with_format_date", "dt = {dt, date, short}")
+
+            message("with_format_plural", """
+                Added {num_items, plural,
+                  =0 {no items}
+                  one {# item}
+                  other {# items}
+                }.
+            """.trimIndent())
+        }
+
+        translation(french) {
+            message("hello_world", "FR Hello World!")
+
+            message("multiline", """
+                FR Line one
+                FR Line two
+            """.trimIndent())
         }
     }
 
     @Test
-    fun testGlossa() {
-//        val reload: Message = glossa.message("command.reload") {
-//            replace("plugin-name", text("MyPlugin"))
-//        }
-//        reload.print()
-//        // [ Reloaded plugin MyPlugin ]
-//
-//        val players0 = glossa.message("command.players") {
-//            format("players", 0)
-//        }
-//        players0.print()
-//        // [ There are no players online ]
-//
-//        val players1 = glossa.message("command.players") {
-//            format("players", 1)
-//        }
-//        players1.print()
-//        // [ There is 1 player online ]
-//
-//        val players10 = glossa.message("command.players") {
-//            format("players", 10)
-//        }
-//        players10.print()
-//        // [ There are 10 players online ]
-//
-//        // Interpret `command.details` as a multiline message (type Message)
-//        // typealias Message = List<Component>
-//        val details = glossa.message("command.details") {
-//            replace("foo", text("foo"))
-//            replace("bar", text("bar"))
-//        }
-//        details.print()
-//        /* [
-//          Details:
-//           - Foo: foo
-//           - Bar: bar
-//         ] */
-//
-//        // Interpret `command.splash_messages` as a list of messages (type List<Message>)
-//        val splashMessages = glossa.messageList("command.splash_messages")
-//        /* [
-//          [ Some funny message ]
-//          [ Another witty message ]
-//          [ A splash message, with multiple lines ]
-//         ] */
-//
-//        val itemM9 = glossa.message("item.m9") {
-//            format("value", 100)
-//        }
-//        itemM9.print()
-//        val itemM4A1 = glossa.message("item.m4a1") {
-//            format("value", 500)
-//        }
-//        itemM4A1.print()
-    }
+    fun basic() {
+        assertMessage(
+            listOf(text("Hello World!"),),
+            glossa.message(english, "hello_world")
+        )
 
-    interface MyPluginMessages {
-        @MessageKey
-        fun helloWorld(): Message
+        assertMessageList(
+            listOf(
+                listOf(text("Message one")),
+                listOf(text("Message two")),
+            ),
+            glossa.messageList(french, "a_message_list")
+        )
 
-        @MessageKey
-        fun withParameters(
-            component: Component,
-            number: Int
-        ): Message
-
-        @MessageKey
-        fun testMessageList(): List<Message>
-
-        @SectionKey
-        val subsection: Subsection
-        interface Subsection {
-            @MessageKey
-            fun aSubKey(): Message
-        }
+        assertMessage(
+            listOf(text("Child message")),
+            glossa.message(english, "section.child")
+        )
     }
 
     @Test
-    fun testMessages() {
-        val logger = Logger.getAnonymousLogger()
-        val english = Locale.ENGLISH
-        val glossa = glossaStandard(english, InvalidMessageProvider.DefaultLogging(logger)) {
-            translation(english) {
-                message("hello_world", "Hello world!")
-                message("with_parameters", "Component: <component> | Number: {number}")
-                messageList("test_message_list",
-                    "Message one",
-                    "Message two",
-                    """
-                        Multiline message
-                        with a second line
-                    """.trimIndent())
-                section("subsection") {
-                    message("a_sub_key", "Some sub key")
+    fun multiline() {
+        assertMessage(
+            listOf(
+                text("Line one"),
+                text("Line two"),
+            ),
+            glossa.message(english, "multiline")
+        )
+
+        assertMessage(
+            listOf(
+                text("FR Line one"),
+                text("FR Line two"),
+            ),
+            glossa.message(french, "multiline")
+        )
+
+        assertMessageList(
+            listOf(
+                listOf(text("Message one with 1 line")),
+                listOf(
+                    text("Message two"),
+                    text("with 2 lines"),
+                ),
+            ),
+            glossa.messageList(english, "multiline_list")
+        )
+    }
+
+    @Test
+    fun locales() {
+        assertMessage(
+            listOf(text("FR Hello World!")),
+            glossa.message(french, "hello_world")
+        )
+
+        assertMessage(
+            listOf(text("Hello World!")),
+            glossa.message(english, "hello_world")
+        )
+    }
+
+    @Test
+    fun fallbacks() {
+        assertMessage(
+            listOf(text("Simple message")),
+            glossa.message(english, "a_message")
+        )
+
+        assertMessage(
+            listOf(text("Simple message")),
+            glossa.message(french, "a_message")
+        )
+
+        assertMessage(
+            listOf(text("missing_key")),
+            glossa.message(english, "missing_key")
+        )
+    }
+
+    @Test
+    fun invalidMessageProvider() {
+        val isMissing = AtomicBoolean()
+        val isInvalidType = AtomicBoolean()
+
+        fun reset() {
+            isMissing.set(false)
+            isInvalidType.set(false)
+        }
+
+        val glossa = glossaStandard(
+            defaultLocale = english,
+            invalidMessageProvider = object : InvalidMessageProvider {
+                override fun missing(key: String): Message {
+                    isMissing.set(true)
+                    return emptyList()
+                }
+
+                override fun invalidType(key: String, expected: MessageType): Message {
+                    isInvalidType.set(true)
+                    return emptyList()
                 }
             }
-        }
-        val messages = glossa.messageProxy<MyPluginMessages>().default
+        ) {
+            translation(english) {
+                message("a_message", "Message")
 
-        printMessage("hello_world") {
-            messages.helloWorld()
-        }
-
-        printMessage("with_parameters") {
-            messages.withParameters(
-                component = text("Hello", NamedTextColor.RED),
-                number = 15
-            )
+                messageList("a_message_list",
+                    "Message one")
+            }
         }
 
-        printMessageList("test_message_list") {
-            messages.testMessageList()
+        glossa.message("a_message")
+        assertFalse(isMissing.get())
+        assertFalse(isInvalidType.get())
+
+        glossa.message("missing_key")
+        assertTrue(isMissing.get())
+        assertFalse(isInvalidType.get())
+        reset()
+
+        glossa.messageList("a_message")
+        assertFalse(isMissing.get())
+        assertTrue(isInvalidType.get())
+        reset()
+
+        glossa.message("a_message_list")
+        assertFalse(isMissing.get())
+        assertTrue(isInvalidType.get())
+        reset()
+    }
+
+    @Test
+    fun replacements() {
+        assertMessage(
+            listOf(text("a = Hello")),
+            glossa.message(english, "with_replacement") {
+                replace("a", text("Hello"))
+            }
+        )
+
+        assertMessage(
+            listOf(text("a = ").append(text("Red", NamedTextColor.RED))),
+            glossa.message(english, "with_replacement") {
+                replace("a", text("Red", NamedTextColor.RED))
+            }
+        )
+    }
+
+    @Test
+    fun formatNumber() {
+        assertMessage(
+            listOf(text("num = 123")),
+            glossa.message(english, "with_format_number") {
+                format("num", 123)
+            }
+        )
+
+        assertMessage(
+            listOf(text("num = 1,234.5")),
+            glossa.message(english, "with_format_number") {
+                format("num", 1234.5)
+            }
+        )
+
+        assertMessage(
+            // \u202f = narrow no-break space
+            listOf(text("num = 1\u202f234,5")),
+            glossa.message(french, "with_format_number") {
+                format("num", 1234.5)
+            }
+        )
+    }
+
+    @Test
+    fun formatDate() {
+        assertMessage(
+            listOf(text("dt = 1/1/70")),
+            glossa.message(english, "with_format_date") {
+                format("dt", Date(0))
+            }
+        )
+
+        assertMessage(
+            listOf(text("dt = 01/01/1970")),
+            glossa.message(french, "with_format_date") {
+                format("dt", Date(0))
+            }
+        )
+    }
+
+    @Test
+    fun formatPlural() {
+        assertMessage(
+            listOf(text("Added no items.")),
+            glossa.message(english, "with_format_plural") {
+                format("num_items", 0)
+            }
+        )
+
+        assertMessage(
+            listOf(text("Added 1 item.")),
+            glossa.message(english, "with_format_plural") {
+                format("num_items", 1)
+            }
+        )
+
+        assertMessage(
+            listOf(text("Added 2 items.")),
+            glossa.message(english, "with_format_plural") {
+                format("num_items", 2)
+            }
+        )
+    }
+
+    interface Messages {
+        fun helloWorld(): Message
+
+        @MessageKey("a_message")
+        fun withSpecialKey(): Message
+
+        fun aMessageList(): List<Message>
+
+        val section: Section
+        interface Section {
+            fun child(): Message
         }
 
-        printMessage("subsection.a_sub_key") {
-            messages.subsection.aSubKey()
-        }
+        @SectionKey("section")
+        val withSectionKey: Section
+
+        fun withReplacement(
+            a: Component,
+        ): Message
+
+        fun withFormatNumber(
+            num: Float,
+        ): Message
+
+        fun withFormatDate(
+            @Placeholder("dt") date: Date,
+        ): Message
+    }
+
+    val messages = glossa.messageProxy<Messages>()
+    val forEnglish = messages.forLocale(english)
+    val forFrench = messages.forLocale(french)
+
+    @Test
+    fun messageProxyBasic() {
+        assertMessage(
+            listOf(text("Hello World!")),
+            forEnglish.helloWorld()
+        )
+
+        assertMessage(
+            listOf(text("FR Hello World!")),
+            forFrench.helloWorld(),
+        )
+
+        assertMessageList(
+            listOf(
+                listOf(text("Message one")),
+                listOf(text("Message two")),
+            ),
+            forEnglish.aMessageList()
+        )
+
+        assertMessage(
+            listOf(text("Child message")),
+            forEnglish.section.child()
+        )
+    }
+
+    @Test
+    fun messageProxyArguments() {
+        assertMessage(
+            listOf(text("a = Hello")),
+            forEnglish.withReplacement(text("Hello"))
+        )
+
+        assertMessage(
+            listOf(text("num = 1,234.5")),
+            forEnglish.withFormatNumber(1234.5f)
+        )
+    }
+
+    @Test
+    fun messageProxyKeyOverrides() {
+        assertMessage(
+            listOf(text("Simple message")),
+            forEnglish.withSpecialKey()
+        )
+
+        assertMessage(
+            listOf(text("Child message")),
+            forEnglish.withSectionKey.child()
+        )
+
+        assertMessage(
+            listOf(text("dt = 1/1/70")),
+            forEnglish.withFormatDate(Date(0))
+        )
     }
 }

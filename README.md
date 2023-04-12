@@ -20,6 +20,7 @@ for Java.
 ```kotlin
 repositories {
     mavenCentral()
+    // maven("https://s01.oss.sonatype.org/content/repositories/snapshots") // for snapshot versions
 }
 
 dependencies {
@@ -35,11 +36,11 @@ dependencies {
 ```kotlin
 val english = Locale.forLanguageTag("en-US")
 val glossa = glossaStandard(
-    defaultLocale = Locale.ENGLISH,
+    defaultLocale = english,
     invalidMessageProvider = InvalidMessageProvider.Default,
 ) {
     substitutions {
-        substitution("icon_item", "🪙")
+        substitution("icon_item", Component.text("🪙"))
     }
     
     styles {
