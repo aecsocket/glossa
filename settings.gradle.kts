@@ -13,5 +13,4 @@ plugins {
 
 rootProject.name = "glossa"
 
-include("glossa-api")
 include("glossa-configurate")
