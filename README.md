@@ -3,8 +3,8 @@
 # Glossa
 [![License](https://img.shields.io/github/license/aecsocket/glossa)](LICENSE)
 [![CI](https://img.shields.io/github/actions/workflow/status/aecsocket/glossa/build.yml)](https://github.com/aecsocket/glossa/actions/workflows/build.yml)
-![Release](https://img.shields.io/maven-central/v/io.github.aecsocket/glossa-api?label=release)
-![Snapshot](https://img.shields.io/nexus/s/io.github.aecsocket/glossa-api?label=snapshot&server=https%3A%2F%2Fs01.oss.sonatype.org)
+![Release](https://img.shields.io/maven-central/v/io.github.aecsocket/glossa?label=release)
+![Snapshot](https://img.shields.io/nexus/s/io.github.aecsocket/glossa?label=snapshot&server=https%3A%2F%2Fs01.oss.sonatype.org)
 
 Localization library for Adventure components
 
@@ -15,6 +15,8 @@ and provides server admins and translators with tools to create translations bas
 features like the MiniMessage format and Unicode ICU templates. It is designed for Kotlin, with minimal support
 for Java.
 
+### [Documentation](https://aecsocket.github.io/glossa/)
+
 ## Usage
 
 ```kotlin
@@ -24,8 +26,8 @@ repositories {
 }
 
 dependencies {
-    implementation("io.github.aecsocket", "glossa-api", "VERSION")
-    implementation("io.github.aecsocket", "glossa-configurate", "VERSION")
+    implementation("io.github.aecsocket", "glossa", "VERSION")
+    // implementation("io.github.aecsocket", "glossa-configurate", "VERSION") // for Configurate module
 }
 ```
 
