@@ -10,5 +10,4 @@ dependencies {
     implementation(libs.configurateExtraKotlin)
 
     testImplementation(libs.configurateYaml)
-    testImplementation(libs.adventureTextMiniMessage)
 }
