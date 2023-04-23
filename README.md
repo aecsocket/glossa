@@ -178,7 +178,7 @@ val commandOutput: Message = messages.forLocale(english).command.state(
 )
 // [
 //   "System state:",
-//   "- Foo: <yellow><OK",
+//   "- Foo: <yellow>OK",
 //   "- Bar: <yellow>ERROR"
 // ]
 ```
