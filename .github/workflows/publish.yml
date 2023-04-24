@@ -1,0 +1,35 @@
+name: Publish
+
+on:
+  push:
+    branches: [ main ] 
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/gradle-build-action@v2
+      - name: Get version type
+        run: |
+          VERSION_TYPE=$(./gradlew -q --console=plain --no-daemon printVersionType)
+          echo VERSION_TYPE=$VERSION_TYPE
+          echo VERSION_TYPE=$VERSION_TYPE >> $GITHUB_ENV
+      - name: Publish snapshot
+        if: ${{ env.version_type == 'snapshot' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: ./gradlew publish
+        env:
+          ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.SONATYPE_USERNAME }}
+          ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}
+      - name: Publish release
+        if: ${{ env.version_type == 'release' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: ./gradlew -PforceSign=true publishToSonatype closeSonatypeStagingRepository
+        env:
+          ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.SONATYPE_USERNAME }}
+          ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SIGNING_PASSWORD }}

@@ -10,12 +10,12 @@ Localization library for Adventure components
 
 </div>
 
+### [GitHub](https://github.com/aecsocket/glossa) · [Docs](https://aecsocket.github.io/glossa)
+
 Glossa provides a simple and opinionated API for developers to create localizable versions of their software,
 and provides server admins and translators with tools to create translations based on powerful and useful
 features like the MiniMessage format and Unicode ICU templates. It is designed for Kotlin, with minimal support
 for Java.
-
-### [Documentation](https://aecsocket.github.io/glossa/)
 
 ## Usage
 
