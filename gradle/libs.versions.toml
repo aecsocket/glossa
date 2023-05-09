@@ -1,0 +1,20 @@
+[versions]
+indra = "3.0.1"
+kotlin = "1.8.20"
+adventure = "4.13.0"
+icu4j = "72.1"
+configurate = "4.1.2"
+
+[libraries]
+indra-common = { group = "net.kyori", name = "indra-common", version.ref = "indra" }
+indra-publishing-sonatype = { group = "net.kyori", name = "indra-publishing-sonatype", version.ref = "indra" }
+kotlin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
+adventure-api = { group = "net.kyori", name = "adventure-api", version.ref = "adventure" }
+adventure-text-minimessage = { group = "net.kyori", name = "adventure-text-minimessage", version.ref = "adventure" }
+adventure-text-serializer-gson = { group = "net.kyori", name = "adventure-text-serializer-gson", version.ref = "adventure" }
+adventure-serializer-configurate4 = { group = "net.kyori", name = "adventure-serializer-configurate4", version.ref = "adventure" }
+icu4j = { group = "com.ibm.icu", name = "icu4j", version.ref = "icu4j" }
+configurate-core = { group = "org.spongepowered", name = "configurate-core", version.ref = "configurate" }
+configurate-extra-kotlin = { group = "org.spongepowered", name = "configurate-extra-kotlin", version.ref = "configurate" }
+configurate-yaml = { group = "org.spongepowered", name = "configurate-yaml", version.ref = "configurate" }

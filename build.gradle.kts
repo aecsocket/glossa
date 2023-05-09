@@ -9,10 +9,10 @@ version = "1.0.6-SNAPSHOT"
 description = "Localization library for Adventure components"
 
 dependencies {
-    api(libs.adventureApi)
-    api(libs.adventureTextMiniMessage)
+    api(libs.adventure.api)
+    api(libs.adventure.text.minimessage)
     implementation(libs.icu4j)
-    implementation(libs.kotlinReflect)
+    implementation(libs.kotlin.reflect)
 
-    testImplementation(libs.adventureTextSerializerGson)
+    testImplementation(libs.adventure.text.serializer.gson)
 }

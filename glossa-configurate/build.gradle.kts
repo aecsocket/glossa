@@ -5,9 +5,9 @@ plugins {
 
 dependencies {
     api(projects.glossa)
-    implementation(libs.adventureSerializerConfigurate)
-    api(libs.configurateCore)
-    implementation(libs.configurateExtraKotlin)
+    implementation(libs.adventure.serializer.configurate4)
+    api(libs.configurate.core)
+    implementation(libs.configurate.extra.kotlin)
 
-    testImplementation(libs.configurateYaml)
+    testImplementation(libs.configurate.yaml)
 }
