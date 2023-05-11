@@ -1,7 +1,6 @@
 <div align="center">
 
 # Glossa
-[![License](https://img.shields.io/github/license/aecsocket/glossa)](LICENSE)
 [![CI](https://img.shields.io/github/actions/workflow/status/aecsocket/glossa/build.yml)](https://github.com/aecsocket/glossa/actions/workflows/build.yml)
 ![Release](https://img.shields.io/maven-central/v/io.github.aecsocket/glossa?label=release)
 ![Snapshot](https://img.shields.io/nexus/s/io.github.aecsocket/glossa?label=snapshot&server=https%3A%2F%2Fs01.oss.sonatype.org)
