@@ -1,5 +1,5 @@
 [versions]
-indra = "3.0.1"
+indra = "3.1.1"
 kotlin = "1.8.20"
 adventure = "4.13.0"
 icu4j = "72.1"

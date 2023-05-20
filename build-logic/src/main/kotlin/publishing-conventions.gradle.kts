@@ -13,6 +13,7 @@ signing {
 indra {
     github("aecsocket", rootProject.name)
     mitLicense()
+    signWithKeyFromPrefixedProperties("maven")
 
     configurePublications {
         pom {
