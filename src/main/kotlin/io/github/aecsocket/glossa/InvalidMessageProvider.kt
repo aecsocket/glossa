@@ -24,11 +24,11 @@ interface InvalidMessageProvider {
     }
 
     /**
-     * Outputs the message key that was used in the operation, and issues a warning to the logger.
+     * Outputs the message key that was used in the operation, and passes a warning message to the log consumer.
      */
-    class DefaultLogging(private val logger: Logger) : InvalidMessageProvider {
+    open class Logging(private val logger: (String) -> Unit) : InvalidMessageProvider {
         override fun missing(key: String): Message {
-            logger.warning("Missing Glossa message for key '$key'")
+            logger("Missing Glossa message for key '$key'")
             return listOf(Component.text(key))
         }
 
@@ -36,10 +36,15 @@ interface InvalidMessageProvider {
             key: String,
             expected: MessageType
         ): Message {
-            logger.warning("Glossa message for key '$key' was expected to be ${expected.name}")
+            logger("Glossa message for key '$key' was expected to be ${expected.name}")
             return listOf(Component.text(key))
         }
     }
+
+    /**
+     * Outputs the message key that was used in the operation, and issues a warning to the [Logger] instance.
+     */
+    open class JavaLogging(private val logger: Logger) : Logging({ logger.warning(it) })
 
     /**
      * Strategy for handling a key which does not exist for any locale in the translator.
