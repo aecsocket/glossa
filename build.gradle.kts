@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "io.github.aecsocket"
-version = "1.0.6-SNAPSHOT"
+version = "1.0.6"
 description = "Localization library for Adventure components"
 
 dependencies {
