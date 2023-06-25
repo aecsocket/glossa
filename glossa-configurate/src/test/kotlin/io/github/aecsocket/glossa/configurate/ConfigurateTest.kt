@@ -10,11 +10,12 @@ import java.io.StringReader
 import java.util.*
 import kotlin.test.Test
 
+// TODO we need actual unit tests
 class ConfigurateTest {
     fun printMessage(key: String, block: (key: String) -> Message) {
         val message = block(key)
         println("$key:")
-        message.forEach { println("  ${defaultAnsiComponentRenderer.render(it)}") }
+        message.forEach { println("  $it") }
     }
 
     interface Messages {
