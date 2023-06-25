@@ -16,7 +16,7 @@ jobs:
       - uses: gradle/gradle-build-action@v2
       - name: Build
         run: |
-          ./gradlew --info build
+          ./gradlew --stacktrace --info build
       - name: Get version type
         run: |
           VERSION_TYPE=$(./gradlew -q --console=plain --no-daemon printVersionType)
