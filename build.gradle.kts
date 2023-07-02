@@ -1,18 +1,7 @@
 plugins {
     id("parent-conventions")
-    id("kotlin-conventions")
-    id("publishing-conventions")
 }
 
 group = "io.github.aecsocket"
-version = "1.1.0"
+version = "1.2.0-SNAPSHOT"
 description = "Localization library for Adventure components"
-
-dependencies {
-    api(libs.adventure.api)
-    api(libs.adventure.text.minimessage)
-    implementation(libs.icu4j)
-    implementation(libs.kotlin.reflect)
-
-    testImplementation(libs.adventure.text.serializer.gson)
-}

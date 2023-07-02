@@ -13,12 +13,10 @@ import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.jvm.javaGetter
 import kotlin.reflect.jvm.javaMethod
 
-val defaultNamingScheme = NamingScheme.SnakeCase
-
 /**
  * Determines a method which maps to a message key under the current section.
  *
- * If blank or not specified, the method name is coerced using [defaultNamingScheme].
+ * If blank or not specified, the method name is coerced using [coerceName].
  */
 @Target(AnnotationTarget.FUNCTION)
 annotation class MessageKey(
@@ -28,7 +26,7 @@ annotation class MessageKey(
 /**
  * Determines a method parameter which maps to a placeholder under the method's message key.
  *
- * If blank or not specified, the parameter name is coerced using [defaultNamingScheme].
+ * If blank or not specified, the parameter name is coerced using [coerceName].
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 annotation class Placeholder(
@@ -38,7 +36,7 @@ annotation class Placeholder(
 /**
  * Determines a property getter which maps to a section key under the current section.
  *
- * If blank or not specified, the property name is coerced using [defaultNamingScheme].
+ * If blank or not specified, the property name is coerced using [coerceName].
  */
 @Target(AnnotationTarget.PROPERTY)
 annotation class SectionKey(
@@ -96,7 +94,7 @@ private fun Glossa.messageProxyModel(type: KClass<*>, baseMessageKey: String): M
             is KFunction -> {
                 // message key
                 val thisMessageKey = member.findAnnotation<MessageKey>()?.value?.ifEmpty { null }
-                    ?: defaultNamingScheme.coerceName(member.name)
+                    ?: coerceName(member.name)
                 val messageKey = baseMessageKey + thisMessageKey
 
                 val messageParams = (1 until member.parameters.size).map { paramIdx ->
@@ -105,7 +103,7 @@ private fun Glossa.messageProxyModel(type: KClass<*>, baseMessageKey: String): M
                         throw IllegalArgumentException("${member.name} param ${paramIdx+1} (${param.name}): $message")
 
                     val placeholder = param.findAnnotation<Placeholder>()?.value?.ifEmpty { null }
-                        ?: defaultNamingScheme.coerceName(param.name
+                        ?: coerceName(param.name
                             ?: error("Must have parameter name or be annotated with ${Placeholder::class.simpleName}"))
 
                     when (param.type.classifier) {
@@ -123,13 +121,13 @@ private fun Glossa.messageProxyModel(type: KClass<*>, baseMessageKey: String): M
                     returnType.classifier == List::class &&
                     returnType.arguments[0].type?.classifier == Component::class ->
                         MessageProvider { locale, args ->
-                            message(locale, messageKey, args)
+                            message(messageKey, locale, args)
                         }
                     returnType.classifier == List::class &&
                     returnType.arguments[0].type?.classifier == List::class &&
                     returnType.arguments[0].type?.arguments?.get(0)?.type?.classifier == Component::class ->
                         MessageProvider { locale, args ->
-                            messageList(locale, messageKey, args)
+                            messageList(messageKey, locale, args)
                         }
                     else -> error("Must return Message (= List<Component>) or List<Message>")
                 }
@@ -147,7 +145,7 @@ private fun Glossa.messageProxyModel(type: KClass<*>, baseMessageKey: String): M
             is KProperty -> {
                 // subsection
                 val sectionKey = member.findAnnotation<SectionKey>()?.value?.ifEmpty { null }
-                    ?: defaultNamingScheme.coerceName(member.name)
+                    ?: coerceName(member.name)
 
                 val sectionType = member.returnType.classifier as? KClass<*>
                     ?: error("Must return class")

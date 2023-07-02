@@ -1,6 +1,7 @@
 plugins {
     id("java-conventions")
     kotlin("jvm")
+    id("org.jetbrains.dokka")
 }
 
 kotlin {

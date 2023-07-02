@@ -11,6 +11,7 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version("0.4.0")
 }
 
-rootProject.name = "glossa"
+rootProject.name = "glossa-parent"
 
+include("glossa")
 include("glossa-configurate")

@@ -7,7 +7,7 @@
 
 Localization library for Adventure components
 
-### [GitHub](https://github.com/aecsocket/glossa) · [Docs](https://aecsocket.github.io/glossa)
+### [GitHub](https://github.com/aecsocket/glossa) · [Docs](https://aecsocket.github.io/glossa) · [Dokka](https://aecsocket.github.io/glossa/dokka)
 
 </div>
 

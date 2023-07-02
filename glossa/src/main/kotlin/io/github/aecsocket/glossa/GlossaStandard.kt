@@ -81,7 +81,7 @@ class GlossaStandard internal constructor(
         return result.toString()
     }
 
-    override fun message(locale: Locale, key: String, args: MessageArgs): Message {
+    override fun message(key: String, locale: Locale, args: MessageArgs): Message {
         val data = messageData(locale, key) ?: return invalidMessageProvider.missing(key)
         if (data !is MessageData.Single) return invalidMessageProvider.invalidType(key, MessageType.SINGLE)
 
@@ -91,7 +91,7 @@ class GlossaStandard internal constructor(
         }
     }
 
-    override fun messageList(locale: Locale, key: String, args: MessageArgs): List<Message> {
+    override fun messageList(key: String, locale: Locale, args: MessageArgs): List<Message> {
         val data = messageData(locale, key) ?: return listOf(invalidMessageProvider.missing(key))
         if (data !is MessageData.Multiple) return listOf(invalidMessageProvider.invalidType(key, MessageType.MULTIPLE))
 
@@ -114,6 +114,12 @@ class GlossaStandard internal constructor(
          * Registers a set of translations for a specific locale.
          */
         fun translation(locale: Locale, block: TranslationNode.Model.() -> Unit = {})
+
+        fun substitutions(block: SubstitutionsModel.() -> Unit) =
+            block(substitutions)
+
+        fun styles(block: StylesModel.() -> Unit) =
+            block(styles)
     }
 
     interface SubstitutionsModel {
@@ -139,12 +145,6 @@ class GlossaStandard internal constructor(
         fun style(key: String, style: Style)
     }
 }
-
-fun GlossaStandard.Model.substitutions(block: GlossaStandard.SubstitutionsModel.() -> Unit) =
-    block(substitutions)
-
-fun GlossaStandard.Model.styles(block: GlossaStandard.StylesModel.() -> Unit) =
-    block(styles)
 
 typealias TranslationPath = List<String>
 
@@ -185,37 +185,44 @@ sealed interface TranslationNode {
         /**
          * Registers a subsection by [key].
          * @param key The key, which must conform to [validateGlossaKey].
+         * @param block A model of the subsection.
          */
         fun section(key: String, block: Model.() -> Unit = {})
 
         /**
          * Registers a [MessageType.SINGLE] message by [key] under the current section.
          * @param key The key, which must conform to [validateGlossaKey].
+         * @param value The message translation.
          */
         fun message(key: String, value: String)
 
         /**
          * Registers a [MessageType.MULTIPLE] message by [key] under the current section.
          * @param key The key, which must conform to [validateGlossaKey].
+         * @param value The list of message translations.
          */
         fun messageList(key: String, value: List<String>)
+
+        /**
+         * Registers a [MessageType.MULTIPLE] message by [key] under the current section.
+         * @param key The key, which must conform to [validateGlossaKey].
+         * @param value The list of message translations.
+         */
+        fun messageList(key: String, value: Iterable<String>) =
+            messageList(key, value.toList())
+
+        /**
+         * Registers a [MessageType.MULTIPLE] message by [key] under the current section.
+         * @param key The key, which must conform to [validateGlossaKey].
+         */
+        fun messageList(key: String, vararg value: String) =
+            messageList(key, value.toList())
     }
 }
 
 /**
- * Registers a [MessageType.MULTIPLE] message by [key] under the current section.
- * @param key The key, which must conform to [validateGlossaKey].
+ * An exception which occurs when building a [Glossa] instance using [glossaStandard].
  */
-fun TranslationNode.Model.messageList(key: String, value: Iterable<String>) =
-    messageList(key, value.toList())
-
-/**
- * Registers a [MessageType.MULTIPLE] message by [key] under the current section.
- * @param key The key, which must conform to [validateGlossaKey].
- */
-fun TranslationNode.Model.messageList(key: String, vararg value: String) =
-    messageList(key, value.toList())
-
 class GlossaBuildException(
     val path: TranslationPath,
     val rawMessage: String? = null,

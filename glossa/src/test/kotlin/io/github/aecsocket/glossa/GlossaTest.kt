@@ -124,7 +124,7 @@ class GlossaTest {
     fun basic() {
         assertMessage(
             listOf(text("Hello World!"),),
-            glossa.message(english, "hello_world")
+            glossa.message("hello_world", english)
         )
 
         assertMessageList(
@@ -132,12 +132,12 @@ class GlossaTest {
                 listOf(text("Message one")),
                 listOf(text("Message two")),
             ),
-            glossa.messageList(french, "a_message_list")
+            glossa.messageList("a_message_list", french)
         )
 
         assertMessage(
             listOf(text("Child message")),
-            glossa.message(english, "section.child")
+            glossa.message("section.child", english)
         )
     }
 
@@ -148,7 +148,7 @@ class GlossaTest {
                 text("Line one"),
                 text("Line two"),
             ),
-            glossa.message(english, "multiline")
+            glossa.message("multiline", english)
         )
 
         assertMessage(
@@ -156,7 +156,7 @@ class GlossaTest {
                 text("FR Line one"),
                 text("FR Line two"),
             ),
-            glossa.message(french, "multiline")
+            glossa.message("multiline", french)
         )
 
         assertMessageList(
@@ -167,7 +167,7 @@ class GlossaTest {
                     text("with 2 lines"),
                 ),
             ),
-            glossa.messageList(english, "multiline_list")
+            glossa.messageList("multiline_list", english)
         )
     }
 
@@ -175,12 +175,12 @@ class GlossaTest {
     fun locales() {
         assertMessage(
             listOf(text("FR Hello World!")),
-            glossa.message(french, "hello_world")
+            glossa.message("hello_world", french)
         )
 
         assertMessage(
             listOf(text("Hello World!")),
-            glossa.message(english, "hello_world")
+            glossa.message("hello_world", english)
         )
     }
 
@@ -188,17 +188,17 @@ class GlossaTest {
     fun fallbacks() {
         assertMessage(
             listOf(text("Simple message")),
-            glossa.message(english, "a_message")
+            glossa.message("a_message", english)
         )
 
         assertMessage(
             listOf(text("Simple message")),
-            glossa.message(french, "a_message")
+            glossa.message("a_message", french)
         )
 
         assertMessage(
             listOf(text("missing_key")),
-            glossa.message(english, "missing_key")
+            glossa.message("missing_key", english)
         )
     }
 
@@ -258,14 +258,14 @@ class GlossaTest {
     fun replacements() {
         assertMessage(
             listOf(text("a = Hello")),
-            glossa.message(english, "with_replacement") {
+            glossa.message("with_replacement", english) {
                 replace("a", text("Hello"))
             }
         )
 
         assertMessage(
             listOf(text("a = ").append(text("Red", NamedTextColor.RED))),
-            glossa.message(english, "with_replacement") {
+            glossa.message("with_replacement", english) {
                 replace("a", text("Red", NamedTextColor.RED))
             }
         )
@@ -275,14 +275,14 @@ class GlossaTest {
     fun formatNumber() {
         assertMessage(
             listOf(text("num = 123")),
-            glossa.message(english, "with_format_number") {
+            glossa.message("with_format_number", english) {
                 format("num", 123)
             }
         )
 
         assertMessage(
             listOf(text("num = 1,234.5")),
-            glossa.message(english, "with_format_number") {
+            glossa.message("with_format_number", english) {
                 format("num", 1234.5)
             }
         )
@@ -290,7 +290,7 @@ class GlossaTest {
         assertMessage(
             // \u202f = narrow no-break space
             listOf(text("num = 1\u202f234,5")),
-            glossa.message(french, "with_format_number") {
+            glossa.message("with_format_number", french) {
                 format("num", 1234.5)
             }
         )
@@ -300,14 +300,14 @@ class GlossaTest {
     fun formatDate() {
         assertMessage(
             listOf(text("dt = 1/1/70")),
-            glossa.message(english, "with_format_date") {
+            glossa.message("with_format_date", english) {
                 format("dt", Date(0))
             }
         )
 
         assertMessage(
             listOf(text("dt = 01/01/1970")),
-            glossa.message(french, "with_format_date") {
+            glossa.message("with_format_date", french) {
                 format("dt", Date(0))
             }
         )
@@ -317,21 +317,21 @@ class GlossaTest {
     fun formatPlural() {
         assertMessage(
             listOf(text("Added no items.")),
-            glossa.message(english, "with_format_plural") {
+            glossa.message("with_format_plural", english) {
                 format("num_items", 0)
             }
         )
 
         assertMessage(
             listOf(text("Added 1 item.")),
-            glossa.message(english, "with_format_plural") {
+            glossa.message("with_format_plural", english) {
                 format("num_items", 1)
             }
         )
 
         assertMessage(
             listOf(text("Added 2 items.")),
-            glossa.message(english, "with_format_plural") {
+            glossa.message("with_format_plural", english) {
                 format("num_items", 2)
             }
         )

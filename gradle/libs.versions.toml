@@ -1,7 +1,8 @@
 [versions]
 indra = "3.1.1"
-kotlin = "1.8.20"
-adventure = "4.13.0"
+kotlin = "1.8.22"
+dokka = "1.8.20"
+adventure = "4.14.0"
 icu4j = "72.1"
 configurate = "4.1.2"
 
@@ -10,6 +11,7 @@ indra-common = { group = "net.kyori", name = "indra-common", version.ref = "indr
 indra-publishing-sonatype = { group = "net.kyori", name = "indra-publishing-sonatype", version.ref = "indra" }
 kotlin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
+dokka = { group = "org.jetbrains.dokka", name = "dokka-gradle-plugin", version.ref = "dokka" }
 adventure-api = { group = "net.kyori", name = "adventure-api", version.ref = "adventure" }
 adventure-text-minimessage = { group = "net.kyori", name = "adventure-text-minimessage", version.ref = "adventure" }
 adventure-text-serializer-gson = { group = "net.kyori", name = "adventure-text-serializer-gson", version.ref = "adventure" }
