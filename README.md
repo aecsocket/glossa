@@ -2,8 +2,8 @@
 
 # Glossa
 [![CI](https://img.shields.io/github/actions/workflow/status/aecsocket/glossa/build.yml)](https://github.com/aecsocket/glossa/actions/workflows/build.yml)
-![Release](https://img.shields.io/maven-central/v/io.github.aecsocket/glossa?label=release)
-![Snapshot](https://img.shields.io/nexus/s/io.github.aecsocket/glossa?label=snapshot&server=https%3A%2F%2Fs01.oss.sonatype.org)
+[![Release](https://img.shields.io/maven-central/v/io.github.aecsocket/glossa?label=release)](https://central.sonatype.com/artifact/io.github.aecsocket/glossa)
+[![Snapshot](https://img.shields.io/nexus/s/io.github.aecsocket/glossa?label=snapshot&server=https%3A%2F%2Fs01.oss.sonatype.org)](https://central.sonatype.com/artifact/io.github.aecsocket/glossa)
 
 Localization library for Adventure components
 

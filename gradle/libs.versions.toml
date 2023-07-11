@@ -1,6 +1,7 @@
 [versions]
-indra = "3.1.1"
+indra = "3.1.2"
 kotlin = "1.8.22"
+spotless = "6.19.0"
 dokka = "1.8.20"
 adventure = "4.14.0"
 icu4j = "72.1"
@@ -11,6 +12,7 @@ indra-common = { group = "net.kyori", name = "indra-common", version.ref = "indr
 indra-publishing-sonatype = { group = "net.kyori", name = "indra-publishing-sonatype", version.ref = "indra" }
 kotlin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
+spotless = { group = "com.diffplug.spotless", name = "spotless-plugin-gradle", version.ref = "spotless" }
 dokka = { group = "org.jetbrains.dokka", name = "dokka-gradle-plugin", version.ref = "dokka" }
 adventure-api = { group = "net.kyori", name = "adventure-api", version.ref = "adventure" }
 adventure-text-minimessage = { group = "net.kyori", name = "adventure-text-minimessage", version.ref = "adventure" }
