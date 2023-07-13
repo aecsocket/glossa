@@ -18,15 +18,21 @@ for Java.
 
 ## Usage
 
+See the version badges for the latest release and snapshot builds.
+
+Modules:
+- `glossa` - core API
+- `glossa-configurate` - tools for the [Configurate](https://github.com/spongepowered/configurate) library
+- 
 ```kotlin
 repositories {
     mavenCentral()
-    // maven("https://s01.oss.sonatype.org/content/repositories/snapshots") // for snapshot versions
+  // for snapshot builds
+  // maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
 }
 
 dependencies {
-    implementation("io.github.aecsocket", "glossa", "VERSION")
-    // implementation("io.github.aecsocket", "glossa-configurate", "VERSION") // for Configurate module
+  implementation("io.github.aecsocket", "glossa-MODULE", "VERSION")
 }
 ```
 
