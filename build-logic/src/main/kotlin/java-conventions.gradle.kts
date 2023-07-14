@@ -16,11 +16,7 @@ repositories {
 }
 
 spotless {
-  kotlin {
-    ktfmt()
-  }
-
-  kotlinGradle {
-    ktfmt()
+  java {
+    googleJavaFormat()
   }
 }

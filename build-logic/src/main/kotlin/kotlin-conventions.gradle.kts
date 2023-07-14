@@ -1,13 +1,23 @@
 plugins {
-    id("java-conventions")
-    kotlin("jvm")
-    id("org.jetbrains.dokka")
+  id("java-conventions")
+  kotlin("jvm")
+  id("org.jetbrains.dokka")
 }
 
 kotlin {
-    jvmToolchain(indra.javaVersions().target().get())
+  jvmToolchain(indra.javaVersions().target().get())
 }
 
 dependencies {
-    testImplementation(kotlin("test"))
+  testImplementation(kotlin("test"))
+}
+
+spotless {
+  kotlin {
+    ktfmt()
+  }
+
+  kotlinGradle {
+    ktfmt()
+  }
 }

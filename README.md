@@ -11,10 +11,10 @@ Localization library for Adventure components
 
 </div>
 
-Glossa provides a simple and opinionated API for developers to create localizable versions of their software,
-and provides server admins and translators with tools to create translations based on powerful and useful
-features like the MiniMessage format and Unicode ICU templates. It is designed for Kotlin, with minimal support
-for Java.
+Glossa provides a simple and opinionated API for developers to create localizable versions of their
+software, and provides server admins and translators with tools to create translations based on
+powerful and useful features like the MiniMessage format and Unicode ICU templates. It is designed
+for Kotlin, with minimal support for Java.
 
 ## Usage
 
@@ -22,17 +22,18 @@ See the version badges for the latest release and snapshot builds.
 
 Modules:
 - `glossa` - core API
-- `glossa-configurate` - tools for the [Configurate](https://github.com/spongepowered/configurate) library
+- `glossa-configurate` - tools for the [Configurate](https://github.com/spongepowered/configurate)
+  library
 
 ```kotlin
 repositories {
-    mavenCentral()
+  mavenCentral()
   // for snapshot builds
   // maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
 }
 
 dependencies {
-  implementation("io.github.aecsocket", "glossa-MODULE", "VERSION")
+  implementation("io.github.aecsocket", "glossa", "VERSION")
 }
 ```
 
